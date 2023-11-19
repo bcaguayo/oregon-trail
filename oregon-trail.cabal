@@ -21,7 +21,8 @@ source-repository head
 common common-stanza
   ghc-options:         -Wno-type-defaults -fwarn-incomplete-patterns
   build-depends:
-      base >=4.15
+      base >=4.15,
+      fin >= 0.3
     , HUnit 
     , QuickCheck
     , containers
