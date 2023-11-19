@@ -1,9 +1,9 @@
 cradle:
   stack:
     - path: ./test
-      component: "project-cis5520:test:project-cis5520-test"
+      component: "oregon-trail:test:oregon-trail-test"
     - path: ./src
-      component: "project-cis5520:lib"
+      component: "oregon-trail:lib"
     - path: ./app
-      component: "project-cis5520:exe:project-cis5520-exe"
+      component: "oregon-trail:exe:oregon-trail-exe"
 
