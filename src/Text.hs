@@ -1,8 +1,4 @@
-module Text (
-  storeString,
-  printString,
-  fetchString
-) where
+module Text where
 
 -- import Control.Monad.State
 -- import qualified Mtl as S
@@ -103,3 +99,17 @@ intro = "THIS PROGRAM SIMULATES A TRIP OVER THE OREGON TRAIL FROM\n"
 -- textList :: [String]
 -- textList = ["Welcome to Oregon Trail!", "Choose your profession:", "1. Banker", "2. Carpenter", "3. Farmer"]
 
+introShort :: String
+introShort = "Welcome to the Oregon Trail!\n" ++
+             "You may: \n" ++
+             "1. Travel the trail \n" ++
+             "2. Quit \n"
+
+options =  "1. Travel the trail \n" ++
+           "2. Quit \n"
+
+endGood :: String
+endGood = "You have reached Oregon, Congratulations!\n"
+
+endBad :: String
+endBad = "You have died of dysentery\n"

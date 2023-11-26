@@ -5,7 +5,7 @@ date: November 1, 2023
 ---
 -}
 
-module RandomGen where
+module State.RandomGen where
 
 -- Some library operations that you can use for this exercise.
 import qualified Control.Monad as Monad
