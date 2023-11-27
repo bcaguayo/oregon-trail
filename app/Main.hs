@@ -1,37 +1,44 @@
 module Main where
 
--- import Lib
-import Text
+import Control.Monad (void)
 import GameState
+import Text
 
 main :: IO ()
 main = username >> start
 
-username :: IO()
+username :: IO ()
 username = do
-    putStrLn "Enter your name: "
-    name <- getLine
-    putStrLn ("Hello, " ++ name ++ "!")
+  putStrLn "Enter your name: "
+  name <- getLine
+  putStrLn ("Hello, " ++ name ++ "!")
 
-start :: IO()
+start :: IO ()
 start = do
-    putStrLn Text.introShort
-    input <- getLine
-    case input of
-        "1" -> putStrLn "Travel the trail" >> Main.options
-        "2" -> putStrLn "Bye Bye!" >> return ()
-        _ -> putStrLn "Invalid input, try again \n" >> start
+  putStrLn Text.introShort
+  input <- getLine
+  case input of
+    "1" -> putStrLn "Travel the trail" >> Main.options
+    "2" -> void (putStrLn "Bye Bye!")
+    _ -> putStrLn "Invalid input, try again \n" >> start
 
-options :: IO()
+options :: IO ()
 options = do
-    putStrLn Text.options
-    input <- getLine
-    case input of
-        "1" -> putStrLn "Travel the trail" >> Main.options
-        "2" -> putStrLn "Bye Bye!" >> return ()
-        _ -> putStrLn "Invalid input, try again \n" >> Main.options
+  putStrLn Text.options
+  input <- getLine
+  case input of
+    "1" -> putStrLn "Travel the trail" >> Main.options
+    "2" -> void (putStrLn "Bye Bye!")
+    _ -> putStrLn "Invalid input, try again \n" >> Main.options
 
--- 
+-- Assume this is the main loop of the game
+gameLoop :: GameState -> IO ()
+gameLoop gameState = do
+  putStrLn "Enter a command:"
+  input <- getLine
+  case parseCommand input of
+    Just command -> gameLoop $ performAction command gameState
+    Nothing -> putStrLn "Invalid command" >> gameLoop gameState
 
 {-
 Basic Functionality:
@@ -57,4 +64,4 @@ how do I make start + options generic on
 line to print, options, next function
 -}
 
---putStrLn Text.intro
+-- putStrLn Text.intro
