@@ -1,5 +1,6 @@
 module GameState where
 
+import Control.Monad.State
 import Data.Map (Map)
 import Data.Type.Nat
 import Resources
@@ -29,6 +30,8 @@ targetMileage = 2000
 checkParameters :: Nat -> Nat -> Pace -> Bool
 checkParameters date mileage pace =
   validDate date && validMileage mileage -- && validPace pace
+
+type GameStateM = Control.Monad.State.State GameState
 
 {-
 min Date is March 29 (1)
@@ -75,53 +78,56 @@ initialGameState =
       mileage = 0,
       pace = Slow,
       health = Healthy,
-      resources = initialResources,
+      resources = initialResources {food = 5, clothes = 0, money = 800},
       event = None
     }
 
 -- | update game state
-updateGameState :: GameState -> GameState
-updateGameState gs =
+updateGameStateM :: GameStateM ()
+updateGameStateM = do
+  gs <- get
   let newDate = date gs + 1
       newMileage = case pace gs of
         Slow -> mileage gs + 10
         Fast -> mileage gs + 20
-      newHealth = updateHealth gs
-      newResources = updateResources gs
-   in gs {date = newDate, mileage = newMileage, health = newHealth, resources = newResources}
+  modify $ \s -> s {date = newDate, mileage = newMileage}
+  updateHealthM
+  updateResourcesM
 
-updateHealth :: GameState -> HealthStatus
-updateHealth gs =
-  case health gs of
-    Healthy -> if isIllConditionMet gs then Ill else Healthy
-    Ill -> if isRecoveryConditionMet gs then Healthy else Ill
-    Critical -> if isRecoveryConditionMet gs then Ill else Critical
-  where
-    -- "Conditions of illness" are defined here, such as a shortage of resources or the occurrence of a specific event
-    isIllConditionMet gs' = food (resources gs') < 10 || event gs' == Disease
+updateHealthM :: GameStateM ()
+updateHealthM = modify $ \gs ->
+  let newHealth = case health gs of
+        Healthy -> if isIllConditionMet gs then Ill else Healthy
+        Ill -> if isRecoveryConditionMet gs then Healthy else Ill
+        Critical -> if isRecoveryConditionMet gs then Ill else Critical
+   in gs {health = newHealth}
 
-    -- "Conditions for rehabilitation" are defined here, such as adequate resources
-    isRecoveryConditionMet gs' = food (resources gs') > 50
+-- | check if ill condition is met
+isIllConditionMet :: GameState -> Bool
+isIllConditionMet gs = food (resources gs) < 10 || event gs == Disease
+
+-- | check if recovery condition is met
+isRecoveryConditionMet :: GameState -> Bool
+isRecoveryConditionMet gs = food (resources gs) > 50
 
 -- | update resources
-updateResources :: GameState -> Resources ResourceType
-updateResources gs =
+updateResourcesM :: GameStateM ()
+updateResourcesM = modify $ \gs ->
   let currentResources = resources gs
-      -- assume that each person consumes 5 food per day
       foodConsumption = 5
-   in substractResources currentResources Food foodConsumption
+   in gs {resources = substractResources currentResources Food foodConsumption}
 
 -- | check if game is end
-isGameEnd :: GameState -> Bool
-isGameEnd gs =
+isGameEndM :: GameStateM Bool
+isGameEndM = gets $ \gs ->
   mileage gs >= targetMileage
     || money (resources gs) <= 0
     || food (resources gs) <= 0
     || health gs == Critical
 
 -- | handle event
-handleEvent :: GameState -> GameState
-handleEvent gs =
+handleEventM :: GameStateM ()
+handleEventM = modify $ \gs ->
   case event gs of
     Disease -> gs {health = Ill, resources = substractResources (resources gs) Food 10}
     GoodHarvest -> gs {resources = addResources (resources gs) Food 50}
@@ -129,44 +135,31 @@ handleEvent gs =
     _ -> gs
 
 -- | handle user input
-performAction :: Command -> GameState -> GameState
-performAction command gs =
-  case command of
-    Help -> gs -- help information
-    Quit -> gs -- quit game
-    Status -> gs -- show the status of the game
-    Travel -> travelAction gs -- travel
-    Rest -> restAction gs -- rest
-    Hunt -> huntAction gs -- hunt
+performActionM :: Command -> GameStateM ()
+performActionM command = case command of
+  Help -> return () -- help information
+  Quit -> return () -- quit game
+  Status -> return () -- show status
+  Travel -> travelActionM
+  Rest -> restActionM
+  Hunt -> huntActionM
 
--- | travel action
-travelAction :: GameState -> GameState
-travelAction gs =
+travelActionM, restActionM, huntActionM :: GameStateM ()
+travelActionM = modify $ \gs ->
   let updatedMileage = mileage gs + travelDistance (pace gs)
    in gs {mileage = updatedMileage}
-
--- | pace to travel distance
-travelDistance :: Pace -> Nat
-travelDistance Slow = 10 -- assume slow travel increases 10 miles each time
-travelDistance Fast = 20 -- assume fast travel increases 20 miles each time
-
--- | logic of rest action
-restAction :: GameState -> GameState
-restAction gs =
+restActionM = modify $ \gs ->
   let improvedHealth = if health gs == Ill then Healthy else health gs
    in gs {health = improvedHealth}
-
--- | logic of hunt action
-huntAction :: GameState -> GameState
-huntAction gs =
-  let gainFood = 30 -- assume that hunting can gain 30 food
+huntActionM = modify $ \gs ->
+  let gainFood = 30
       updatedResources = addResources (resources gs) Food gainFood
    in gs {resources = updatedResources}
 
-shopAction :: GameState -> GameState
-shopAction gs =
-  let cost = 20
-   in gs {resources = substractMoney (resources gs) cost}
+-- | return travel distance
+travelDistance :: Pace -> Nat
+travelDistance Slow = 10 -- slow travel, for example 10 miles each time
+travelDistance Fast = 20 -- fast travel, for example 20 miles each time
 
 updateMileage :: GameState -> GameState
 updateMileage gs = case pace gs of
@@ -229,3 +222,63 @@ update'' = undefined
 
 -- call text
 --
+
+-- test
+-- testUpdateGameState :: Test
+testUpdateGameState :: Test
+testUpdateGameState = TestCase $ do
+  let state = initialGameState {date = 1, mileage = 100, pace = Slow}
+  let state' = execState updateGameStateM state
+  assertEqual "Date should increase by 1" 2 (date state')
+  assertEqual "Mileage should increase by 10 for Slow pace" 110 (mileage state')
+
+-- testUpdateHealth :: Test
+
+testUpdateHealth :: Test
+testUpdateHealth = TestCase $ do
+  let state = initialGameState {health = Healthy, resources = initialResources {food = 5, clothes = 0, money = 800}}
+  let state' = execState updateHealthM state
+  assertEqual "Health should change to Ill if food is low" Ill (health state')
+
+-- testIsGameEnd :: Test
+testIsGameEnd :: Test
+testIsGameEnd = TestCase $ do
+  let state = initialGameState {mileage = targetMileage}
+  let isEnd = evalState isGameEndM state
+  assertBool "Game should end when target mileage reached" isEnd
+
+testTravelAction :: Test
+testTravelAction = TestCase $ do
+  let initial = initialGameState {mileage = 0, pace = Slow}
+  let state' = execState travelActionM initial
+  assertEqual "Slow travel should increase mileage by 10" 10 (mileage state')
+
+testHuntAction :: Test
+testHuntAction = TestCase $ do
+  let initial = initialGameState {resources = initialResources {food = 0}}
+  let state' = execState huntActionM initial
+  assertEqual "Hunting should increase food by 30" 30 (food (resources state'))
+
+testGameEndMileage :: Test
+testGameEndMileage = TestCase $ do
+  let state = initialGameState {mileage = targetMileage}
+  let isEnd = evalState isGameEndM state
+  assertBool "Game should end when target mileage reached" isEnd
+
+testGameEndHealth :: Test
+testGameEndHealth = TestCase $ do
+  let state = initialGameState {health = Critical}
+  let isEnd = evalState isGameEndM state
+  assertBool "Game should end when health is Critical" isEnd
+
+testUpdateResources :: Test
+testUpdateResources = TestCase $ do
+  let initial = initialGameState {resources = initialResources {food = 10}}
+  let state' = execState updateResourcesM initial
+  assertEqual "Food should decrease by 5 after update" 5 (food (resources state'))
+
+tests :: Test
+tests = TestList [testUpdateGameState, testUpdateHealth, testIsGameEnd, testTravelAction, testHuntAction, testGameEndMileage, testGameEndHealth, testUpdateResources]
+
+main :: IO ()
+main = runTestTT tests >>= print
