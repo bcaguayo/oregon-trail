@@ -37,7 +37,9 @@ gameLoop gameState = do
   putStrLn "Enter a command:"
   input <- getLine
   case parseCommand input of
-    Just command -> gameLoop $ performAction command gameState
+    Just command -> do
+      let ((), newGameState) = runState (performActionM command) gameState
+      gameLoop newGameState
     Nothing -> putStrLn "Invalid command" >> gameLoop gameState
 
 {-
