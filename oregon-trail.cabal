@@ -22,7 +22,8 @@ common common-stanza
   ghc-options:         -Wno-type-defaults -fwarn-incomplete-patterns
   build-depends:
       base >=4.15,
-      fin >= 0.3
+      fin >= 0.3,
+      natural-arithmetic >= 0.1
     , HUnit 
     , QuickCheck
     , containers
@@ -45,6 +46,7 @@ library
       Resources
       Text
       GameState
+      UserCommands
       State.State
       State.RandomGen
       State.StateMonad

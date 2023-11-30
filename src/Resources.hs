@@ -27,16 +27,15 @@ substractResource r n =
     if n > currency r then error "Insufficient funds" 
     else r { currency = currency r - n }
 
-data ResourceType = Food | Clothes | Money
+data ResourceType = Food | Clothes | Money deriving (Eq, Ord, Show)
 
 type ResourcesM = Map ResourceType Nat
-
 
 data Resources s = Resources {
     food :: Nat,
     clothes :: Nat,
     money :: Nat
-}
+} deriving (Eq, Ord, Show)
 
 
 -- data.Map ResourceType -> Nat
@@ -46,6 +45,9 @@ data Resources s = Resources {
 initialResources :: Resources s
 initialResources = Resources { food = 0, clothes = 0, money = 800 }
 
+initialResources2 :: Resources s
+initialResources2 = Resources { food = 10, clothes = 0, money = 800 }
+
 addResources :: Resources s -> ResourceType -> Nat -> Resources s
 addResources r rtype n = case rtype of
     Food -> r { food = food r + n }
@@ -54,12 +56,15 @@ addResources r rtype n = case rtype of
 
 substractResources :: Resources s -> ResourceType -> Nat -> Resources s
 substractResources r rtype n = case rtype of
-    Food ->    if n > food r then error "Insufficient food"
-               else r { food = food r - n }
-    Clothes -> if n > clothes r then error "Insufficient clothes"
-               else r { clothes = clothes r - n }
-    Money ->   if n > money r then error "Insufficient funds"
-               else r { money = money r - n }
+    Food ->    case minus (food r) n of
+                 Just n' -> r { food = n' }
+                 Nothing -> error "Insufficient food"
+    Clothes -> case minus (clothes r) n of
+                    Just n' -> r { clothes = n' }
+                    Nothing -> error "Insufficient clothes"
+    Money ->   case minus (money r) n of
+                    Just n' -> r { money = n' }
+                    Nothing -> error "Insufficient funds"
 
 addMoney :: Resources s -> Nat -> Resources s
 addMoney r n = r { money = money r + n }
@@ -71,3 +76,12 @@ substractMoney r n =
 
 -- make functions to change the state generic
 -- pass in which resource we would like to change
+
+
+-- | utility for substraction
+minus :: Nat -> Nat -> Maybe Nat
+minus a b = if sub >= 0 then Just (fromIntegral sub) else Nothing
+    where sub = fromIntegral a - fromIntegral b :: Int
+
+-- >>> minus 10 5
+-- Just 5

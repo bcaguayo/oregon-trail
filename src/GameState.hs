@@ -2,12 +2,13 @@ module GameState where
 
 import Control.Monad.State
 import Data.Map (Map)
-import Data.Type.Nat
+import Data.Type.Nat ( Nat )
 import Resources
 import Test.HUnit
-import Test.QuickCheck
-import Text
-import UserCommands
+    ( assertBool, assertEqual, runTestTT, Test(TestList, TestCase) )
+import Test.QuickCheck ()
+import Text ()
+import UserCommands ( Command(..) )
 
 data Pace = Slow | Fast deriving (Show, Eq)
 
@@ -22,7 +23,7 @@ data GameState = GameState
     health :: HealthStatus,
     resources :: Resources ResourceType,
     event :: Event
-  }
+  } deriving (Show, Eq)
 
 targetMileage :: Nat
 targetMileage = 2000
@@ -220,11 +221,6 @@ update' = undefined
 update'' :: Resources a -> GameState -> (Resources a, GameState)
 update'' = undefined
 
--- call text
---
-
--- test
--- testUpdateGameState :: Test
 testUpdateGameState :: Test
 testUpdateGameState = TestCase $ do
   let state = initialGameState {date = 1, mileage = 100, pace = Slow}
@@ -232,15 +228,12 @@ testUpdateGameState = TestCase $ do
   assertEqual "Date should increase by 1" 2 (date state')
   assertEqual "Mileage should increase by 10 for Slow pace" 110 (mileage state')
 
--- testUpdateHealth :: Test
-
 testUpdateHealth :: Test
 testUpdateHealth = TestCase $ do
   let state = initialGameState {health = Healthy, resources = initialResources {food = 5, clothes = 0, money = 800}}
   let state' = execState updateHealthM state
   assertEqual "Health should change to Ill if food is low" Ill (health state')
 
--- testIsGameEnd :: Test
 testIsGameEnd :: Test
 testIsGameEnd = TestCase $ do
   let state = initialGameState {mileage = targetMileage}
@@ -273,12 +266,33 @@ testGameEndHealth = TestCase $ do
 
 testUpdateResources :: Test
 testUpdateResources = TestCase $ do
-  let initial = initialGameState {resources = initialResources {food = 10}}
-  let state' = execState updateResourcesM initial
-  assertEqual "Food should decrease by 5 after update" 5 (food (resources state'))
+  let initial = initialGameState {resources = addResources initialResources Food 10}
+  let state = execState updateResourcesM initial  
+  assertEqual "Food should decrease by 5 after update" 5 (food (resources state))
+
+res10 = addResources initialResources Food 10
+
+res5 = substractResources res10 Food 5
+
+-- >>> res10
+-- Resources {food = 10, clothes = 0, money = 800}
+-- >>> res5
+-- Insufficient food
 
 tests :: Test
 tests = TestList [testUpdateGameState, testUpdateHealth, testIsGameEnd, testTravelAction, testHuntAction, testGameEndMileage, testGameEndHealth, testUpdateResources]
+
+-- Debug.Trace
+-- >>> :k TestCase
+-- Not in scope: type constructor or class `TestCase'
+
+-- test1 :: Test
+-- test1 = TestCase $ assertBool True
+
+-- runTestTT
+
+-- >>> runTestTT testUpdateResources
+-- Counts {cases = 1, tried = 1, errors = 0, failures = 0}
 
 main :: IO ()
 main = runTestTT tests >>= print

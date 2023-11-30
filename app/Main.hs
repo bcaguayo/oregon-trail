@@ -1,8 +1,9 @@
 module Main where
 
 import Control.Monad (void)
-import GameState
-import Text
+import GameState ( GameState )
+import Text ( introShort, options )
+import UserCommands (parseCommand)
 
 main :: IO ()
 main = username >> start
@@ -32,15 +33,15 @@ options = do
     _ -> putStrLn "Invalid input, try again \n" >> Main.options
 
 -- Assume this is the main loop of the game
-gameLoop :: GameState -> IO ()
-gameLoop gameState = do
-  putStrLn "Enter a command:"
-  input <- getLine
-  case parseCommand input of
-    Just command -> do
-      let ((), newGameState) = runState (performActionM command) gameState
-      gameLoop newGameState
-    Nothing -> putStrLn "Invalid command" >> gameLoop gameState
+-- gameLoop :: GameState -> IO ()
+-- gameLoop gameState = do
+--   putStrLn "Enter a command:"
+--   input <- getLine
+--   case parseCommand input of
+--     Just command -> do
+--       let ((), newGameState) = runState (performActionM command) gameState
+--       gameLoop newGameState
+--     Nothing -> putStrLn "Invalid command" >> gameLoop gameState
 
 {-
 Basic Functionality:

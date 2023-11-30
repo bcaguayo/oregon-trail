@@ -13,16 +13,14 @@ type Display = [String]
 -- | Store a string in the state
 -- storeString :: String -> State Display ()
 -- storeString s = modify (s:)
-storeString :: String -> IO ()
-storeString s = putStrLn s
+-- storeString :: String -> IO ()
+-- storeString s = putStrLn s
 
 -- | Print all stored strings to the terminal
 -- printString :: State Display ()
 -- printString = do
 --   strings <- get
 --   liftIO $ mapM_ putStrLn strings
-printString :: IO ()
-printString = putStrLn "Welcome to Oregon Trail!"
 
 -- | Fetch the most recently stored string
 -- fetchString :: State Display (Maybe String)
@@ -33,6 +31,7 @@ printString = putStrLn "Welcome to Oregon Trail!"
 --     (s:ss) -> do
 --       put ss
 --       return (Just s)
+
 fetchString :: IO ()
 fetchString = putStrLn "Choose your profession:"
 
