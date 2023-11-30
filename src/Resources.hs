@@ -56,13 +56,13 @@ addResources r rtype n = case rtype of
 
 substractResources :: Resources s -> ResourceType -> Nat -> Resources s
 substractResources r rtype n = case rtype of
-    Food ->    case minus (food r) n of
+    Food ->    case food r `minus` n of
                  Just n' -> r { food = n' }
                  Nothing -> error "Insufficient food"
-    Clothes -> case minus (clothes r) n of
+    Clothes -> case clothes r `minus` n of
                     Just n' -> r { clothes = n' }
                     Nothing -> error "Insufficient clothes"
-    Money ->   case minus (money r) n of
+    Money ->   case money r `minus` n of
                     Just n' -> r { money = n' }
                     Nothing -> error "Insufficient funds"
 
