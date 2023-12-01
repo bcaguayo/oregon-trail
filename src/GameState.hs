@@ -8,7 +8,7 @@ import Test.HUnit
     ( assertBool, assertEqual, runTestTT, Test(TestList, TestCase) )
 import Test.QuickCheck ()
 import Text ()
-import UserCommands ( Command(..) )
+import Options
 
 data Pace = Slow | Fast deriving (Show, Eq)
 
@@ -16,13 +16,16 @@ data HealthStatus = Healthy | Ill | Critical deriving (Show, Eq)
 
 data Event = None | Disease | BadWeather | GoodHarvest deriving (Show, Eq)
 
+data GameStatus = Playing | GameOver | GameEnd deriving (Show, Eq)
+
 data GameState = GameState
   { date :: Nat,
     mileage :: Nat,
     pace :: Pace,
     health :: HealthStatus,
     resources :: Resources ResourceType,
-    event :: Event
+    event :: Event,
+    status :: GameStatus
   } deriving (Show, Eq)
 
 {-
@@ -113,7 +116,8 @@ initialGameState =
       pace = Slow,
       health = Healthy,
       resources = initialResources,
-      event = None
+      event = None,
+      status = Playing
     }
 
 -- | update game state

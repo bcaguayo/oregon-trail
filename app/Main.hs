@@ -4,7 +4,9 @@ import Control.Monad
 import Control.Monad.State
 import GameState
 import Text ( introShort, options )
-import UserCommands
+import Options
+import GHC.Base (undefined)
+import GameState (initialGameState)
 
 main :: IO ()
 main = username >> start
@@ -14,6 +16,12 @@ username = do
   putStrLn "Enter your name: "
   name <- getLine
   putStrLn ("Hello, " ++ name ++ "!")
+
+profession :: IO ()
+profession = undefined
+
+marksmanship :: IO ()
+marksmanship = undefined
 
 start :: IO ()
 start = do
@@ -57,6 +65,38 @@ test = do
 
 -- WIP etc, check documentation
 
+-- BEGIN: Generate I/O Tests
+-- ioTests :: Test
+-- ioTests = TestList
+--     [ TestLabel "Test 1" test1
+--     , TestLabel "Test 2" test2
+--     -- Add more tests here
+--     ]
+
+-- test1 :: Test
+-- test1 = TestCase $ do
+--     -- Set up the initial state
+--     let initialState = initialGameState
+
+--     -- Perform the IO action
+--     output <- someIOAction initialState
+
+--     -- Check the expected output
+--     assertEqual "Test 1 failed" expectedOutput output
+
+-- test2 :: Test
+-- test2 = TestCase $ do
+--     -- Set up the initial state
+--     let initialState = initialGameState
+
+--     -- Perform the IO action
+--     output <- someIOAction initialState
+
+--     -- Check the expected output
+--     assertEqual "Test 2 failed" expectedOutput output
+
+-- END: Generate I/O Tests
+
 {-
 Basic Functionality:
 
@@ -83,3 +123,61 @@ line to print, options, next function
 -}
 
 -- putStrLn Text.intro
+
+{-
+
+TicTacToe
+
+data Player = X | O deriving (Eq, Show)
+data Location = Loc Int Int deriving (Eq, Ord, Show)
+type Board = M.Map Location Player
+data Game = Game { board :: Board , current :: Player } deriving (Eq, Show)
+data End = Win Player | Tie deriving (Eq, Show)
+
+initialGame :: Game
+checkEnd :: Board -> Maybe End
+valid :: Board -> Location -> Bool
+makeMove :: Game -> Location -> Maybe Game
+showBoard :: Board -> String
+
+class Monad m => Interface m where
+   getMove :: Game -> m Location
+   message :: String -> m ()
+   playerMessage :: Player -> String -> m ()
+
+locations :: [Location]
+playGame :: Interface m => Game -> m ()
+
+instance Interface IO where
+   getMove :: Game -> IO Location
+   playerMessage :: Player -> String -> IO ()
+   message :: String -> IO ()
+
+testCheckEnd :: Test
+testCheckEnd = TestList [
+    "Win for X"           ~: checkEnd winBoard ~?= Just (Win X)
+  , "Initial is playable" ~: checkEnd (board initialGame) ~?= Nothing
+  , "Tie game"            ~: checkEnd tieBoard ~?= Just Tie
+  ] where
+      winBoard = makeBoard [ [Just X,  Just X,  Just X ],
+                             [Nothing, Just O,  Nothing],
+                             [Nothing, Just O,  Nothing] ]
+      tieBoard = makeBoard [ [Just X, Just O, Just X],
+                             [Just O, Just X, Just O],
+                             [Just O, Just X, Just X] ]
+-- a quickcheck property about validity
+prop_validMove :: Game -> Location -> Bool
+prop_validMove game move =
+  isJust (makeMove game move) == valid (board game) move
+-- Arbitrary instances. These don't need to be complete yet,
+-- but you should think about what types you will need to be able
+-- to generate random values for.
+instance Arbitrary Game where
+  arbitrary = Game <$> arbitrary <*> arbitrary
+instance Arbitrary Player where
+  arbitrary = elements [X, O]
+instance Arbitrary Location where
+  arbitrary = elements locations
+
+
+-}

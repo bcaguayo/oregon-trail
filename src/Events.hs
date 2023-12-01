@@ -6,6 +6,7 @@ import Test.HUnit
 import Test.QuickCheck
 import Data.Maybe (fromMaybe)
 import Data.List (intercalate)
+import System.Random
 
 -- | A Modifier stores: 
 -- 1. A ResourceType we want to change
@@ -152,6 +153,30 @@ testEventToString = TestCase $
     assertEqual "Event to string" "Hunting: +10 food" (eventToString eventHunting)
 
 -- END: Event tests
+
+-- generateRandomModifiers :: IO ResourceSet
+-- generateRandomModifiers = do
+--     gen <- newStdGen
+--     let (m1, gen1) = generateRandomModifier gen
+--         (m2, gen2) = generateRandomModifier gen1
+--         (m3, _) = generateRandomModifier gen2
+--     return (m1, m2, m3)
+
+-- generateRandomModifier :: RandomGen g => g -> (Modifier, g)
+-- generateRandomModifier gen =
+--     let (value, gen') = randomR (0, 100) gen
+--         (isPositive, gen'') = random gen'
+--         resourceType = case (randomR (0, 2) gen'') of
+--             0 -> Food
+--             1 -> Clothes
+--             2 -> Money
+--     in (M (resourceType, isPositive, (fromIntegral value)), gen'')
+
+-- Generate a random event
+-- generateRandomEvent :: String -> Event
+-- generateRandomEvent s = E (s, generateRandomModifiers)
+
+
 
 -- >>> runTestTT eventTests
 -- Counts {cases = 3, tried = 3, errors = 0, failures = 0}

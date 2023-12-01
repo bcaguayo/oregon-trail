@@ -42,14 +42,11 @@ library
   import:
       common-stanza
   exposed-modules:
+      GameState
       Resources
       Text
       Events
-      GameState
-      UserCommands
-      State.State
-      State.RandomGen
-      State.StateMonad
+      Options
   hs-source-dirs:
       src
 

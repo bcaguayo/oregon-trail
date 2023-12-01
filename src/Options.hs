@@ -1,5 +1,5 @@
 
-module UserCommands where
+module Options where
 
 import Data.Char (toLower)
 

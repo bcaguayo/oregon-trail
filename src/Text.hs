@@ -112,3 +112,7 @@ endGood = "You have reached Oregon, Congratulations!\n"
 
 endBad :: String
 endBad = "You have died of dysentery\n"
+
+endSlow :: String
+endSlow = "You have been on the trail for too long. \n" ++
+          "Your family dies in the first blizzard of winter \nGame Over\n"

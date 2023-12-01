@@ -47,4 +47,9 @@ WIP:
 - make options
 - get testing
 
-Tuesdays, 12-1PM, Levine 501 bump space
+Itinerary Dec 1 2:30pm
+1. Go over 
+3. Issues
+    - randomizing events
+    - IO Tests
+    - structural issues

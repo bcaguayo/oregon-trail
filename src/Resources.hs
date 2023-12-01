@@ -98,3 +98,5 @@ minus a b = if sub >= 0 then Just (fromIntegral sub) else Nothing
 -- | test all resource outputs are valid
 -- | kinda like gameState
 -- | also move some functions here
+
+-- wip hunit test
