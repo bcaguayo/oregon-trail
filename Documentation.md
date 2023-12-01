@@ -40,4 +40,11 @@ Modules:
 
 * Ask TAs
 
+WIP:
+- Get State and StateMonad from Solutions or delete
+- ask about substraction
+- make new map
+- make options
+- get testing
+
 Tuesdays, 12-1PM, Levine 501 bump space

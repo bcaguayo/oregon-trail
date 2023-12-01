@@ -1,8 +1,5 @@
 
-module UserCommands
-    ( Command(..)
-    , parseCommand
-    ) where
+module UserCommands where
 
 import Data.Char (toLower)
 

@@ -42,9 +42,9 @@ library
   import:
       common-stanza
   exposed-modules:
-      Lib
       Resources
       Text
+      Events
       GameState
       UserCommands
       State.State

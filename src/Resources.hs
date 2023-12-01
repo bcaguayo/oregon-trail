@@ -27,7 +27,12 @@ substractResource r n =
     if n > currency r then error "Insufficient funds" 
     else r { currency = currency r - n }
 
-data ResourceType = Food | Clothes | Money deriving (Eq, Ord, Show)
+data ResourceType = Food | Clothes | Money deriving (Eq, Ord)
+
+instance Show ResourceType where
+    show Food = "food"
+    show Clothes = "clothes"
+    show Money = "money"
 
 type ResourcesM = Map ResourceType Nat
 
@@ -42,12 +47,17 @@ data Resources s = Resources {
 -- get
 -- simplify, not case
 
+zeroResources :: Resources s
+zeroResources = Resources { food = 0, clothes = 0, money = 0 }
+
 initialResources :: Resources s
 initialResources = Resources { food = 0, clothes = 0, money = 800 }
 
 initialResources2 :: Resources s
 initialResources2 = Resources { food = 10, clothes = 0, money = 800 }
 
+-- make functions to change the state generic
+-- pass in which resource we would like to change
 addResources :: Resources s -> ResourceType -> Nat -> Resources s
 addResources r rtype n = case rtype of
     Food -> r { food = food r + n }
@@ -74,14 +84,17 @@ substractMoney r n =
     if n > money r then error "Insufficient funds" 
     else r { money = money r - n }
 
--- make functions to change the state generic
--- pass in which resource we would like to change
-
+getResourceAmount :: Resources s -> ResourceType -> Nat
+getResourceAmount r rtype = case rtype of
+    Food -> food r
+    Clothes -> clothes r
+    Money -> money r
 
 -- | utility for substraction
 minus :: Nat -> Nat -> Maybe Nat
 minus a b = if sub >= 0 then Just (fromIntegral sub) else Nothing
     where sub = fromIntegral a - fromIntegral b :: Int
 
--- >>> minus 10 5
--- Just 5
+-- | test all resource outputs are valid
+-- | kinda like gameState
+-- | also move some functions here

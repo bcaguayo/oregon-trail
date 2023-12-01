@@ -1,9 +1,10 @@
 module Main where
 
-import Control.Monad (void)
-import GameState ( GameState )
+import Control.Monad
+import Control.Monad.State
+import GameState
 import Text ( introShort, options )
-import UserCommands (parseCommand)
+import UserCommands
 
 main :: IO ()
 main = username >> start
@@ -33,15 +34,28 @@ options = do
     _ -> putStrLn "Invalid input, try again \n" >> Main.options
 
 -- Assume this is the main loop of the game
--- gameLoop :: GameState -> IO ()
--- gameLoop gameState = do
---   putStrLn "Enter a command:"
---   input <- getLine
---   case parseCommand input of
---     Just command -> do
---       let ((), newGameState) = runState (performActionM command) gameState
---       gameLoop newGameState
---     Nothing -> putStrLn "Invalid command" >> gameLoop gameState
+gameLoop :: GameState -> IO ()
+gameLoop gameState = do
+  putStrLn "Enter a command:"
+  input <- getLine
+  case parseCommand input of
+    Just command -> do
+      let ((), newGameState) = runState (performActionM command) gameState
+      gameLoop newGameState
+    Nothing -> putStrLn "Invalid command" >> gameLoop gameState
+
+-- | tests using dummy IO data
+test :: IO ()
+test = do
+  putStrLn "Enter a command:"
+  input <- getLine
+  case parseCommand input of
+    Just command -> do
+      let ((), newGameState) = runState (performActionM command) initialGameState
+      print newGameState
+    Nothing -> putStrLn "Invalid command" >> test
+
+-- WIP etc, check documentation
 
 {-
 Basic Functionality:
@@ -62,6 +76,7 @@ loop while game is not over
 manage GameState
 
 write tests
+IO dummy
 
 how do I make start + options generic on
 line to print, options, next function
