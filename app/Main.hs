@@ -32,7 +32,8 @@ marksmanship = undefined
 start :: IO ()
 start = do
   putStrLn Text.introShort
-  S.execState (S.put initialGameState) undefined
+  -- initialize game state
+  -- S.execState (S.put initialGameState) undefined
   input <- getLine
   case input of
     "1" -> putStrLn "Travel the trail" >> Main.options
@@ -43,11 +44,14 @@ options :: IO ()
 options = do
   putStrLn Text.option
   input <- getLine
-  s <- liftIO S.get
+  -- get game state
+  -- s <- liftIO S.get
   case parseInt input of
     Just Help -> putStrLn Text.help >> options
-    Just Status -> putStrLn (show s) >> options
+    Just Status -> options -- print s -> putStrLn (show s) >> options
+    Just Travel -> putStrLn "Traveling" >> options -- update GS
     Just Rest -> putStrLn "You are well rested" >> options
+    Just Shop -> putStrLn "You have bought some stuff" >> options -- update Resources
     Just Quit -> quit
     Nothing -> putStrLn "Invalid command, try again \n" >> options
 
