@@ -26,7 +26,7 @@ data GameState = GameState
     resources :: Resources ResourceType,
     event :: Event,
     status :: GameStatus
-  } deriving (Show, Eq)
+  } deriving (Eq)
 
 {-
 The exact distance traveled on the Oregon Trail varied depending on the specific 
@@ -107,6 +107,22 @@ paceFast = 145
 paceSlow :: Nat
 paceSlow = 95
 
+instance Show GameState where
+  show gs =
+    "Status: { Date: "
+      ++ natToDate (date gs)
+      ++ ", Mileage: "
+      ++ show (mileage gs)
+      ++ ", Pace: "
+      ++ show (pace gs)
+      ++ ", Health: "
+      ++ show (health gs)
+      ++ ", Resources: "
+      ++ show (resources gs)
+      ++ ", Event: "
+      ++ show (event gs)
+      ++ "\n"
+
 -- START=
 initialGameState :: GameState
 initialGameState =
@@ -119,6 +135,14 @@ initialGameState =
       event = None,
       status = Playing
     }
+
+checkState :: GameState -> GameStatus
+checkState gs
+  | date gs > 266 = GameOver
+  | mileage gs >= targetMileage = GameEnd
+  | food (resources gs) <= 0 = GameOver
+  | health gs == Critical = GameOver
+  | otherwise = Playing
 
 -- | update game state
 updateGameStateM :: GameStateM ()
@@ -180,16 +204,16 @@ performActionM command = case command of
   Status -> return () -- show status
   Travel -> travelActionM
   Rest -> restActionM
-  Hunt -> huntActionM
+  Shop -> shopActionM
 
-travelActionM, restActionM, huntActionM :: GameStateM ()
+travelActionM, restActionM, shopActionM :: GameStateM ()
 travelActionM = modify $ \gs ->
   let updatedMileage = mileage gs + travelDistance (pace gs)
    in gs {mileage = updatedMileage}
 restActionM = modify $ \gs ->
   let improvedHealth = if health gs == Ill then Healthy else health gs
    in gs {health = improvedHealth}
-huntActionM = modify $ \gs ->
+shopActionM = modify $ \gs ->
   let gainFood = 30
       updatedResources = addResources (resources gs) Food gainFood
    in gs {resources = updatedResources}
@@ -286,7 +310,7 @@ testTravelAction = TestCase $ do
 testHuntAction :: Test
 testHuntAction = TestCase $ do
   let initial = initialGameState {resources = initialResources {food = 0}}
-  let state' = execState huntActionM initial
+  let state' = execState shopActionM initial
   assertEqual "Hunting should increase food by 30" 30 (food (resources state'))
 
 testGameEndMileage :: Test

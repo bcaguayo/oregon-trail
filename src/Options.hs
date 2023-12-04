@@ -9,7 +9,7 @@ data Command
     | Status
     | Travel
     | Rest
-    | Hunt
+    | Shop
     deriving (Eq, Show)
 
 parseCommand :: String -> Maybe Command
@@ -19,7 +19,7 @@ parseCommand input = case map toLower input of
     "status" -> Just Status
     "travel" -> Just Travel
     "rest" -> Just Rest
-    "hunt" -> Just Hunt
+    "shop" -> Just Shop
     _ -> Nothing
 
 -- This is a version that handles Int Commands
@@ -30,5 +30,5 @@ parseInt input = case map toLower input of
     "3" -> Just Status
     "4" -> Just Travel
     "5" -> Just Rest
-    "6" -> Just Hunt
+    "6" -> Just Shop
     _ -> Nothing

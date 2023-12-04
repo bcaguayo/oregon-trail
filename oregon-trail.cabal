@@ -42,6 +42,8 @@ library
   import:
       common-stanza
   exposed-modules:
+      State
+      StateMonad
       GameState
       Resources
       Text

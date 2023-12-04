@@ -49,6 +49,7 @@ version =  "PROGRAM NAME - 0REGON        VERSION:01/01/78"      ++ "\n"
 --               "MINNESOTA EDUCATIONAL COMPUTING CONSORTIUM STAFF" ++ "\n" ++
 --               "CDC CYBER 70/73-26 BASIC 3-1"
 
+intro :: String
 intro = "THIS PROGRAM SIMULATES A TRIP OVER THE OREGON TRAIL FROM\n"
         ++ "INDEPENDENCE, MISSOURI TO OREGON CITY, OREGON IN 1847.\n"
         ++ "YOUR FAMILY OF FIVE WILL COVER THE 2040 MILE OREGON TRAIL\n"
@@ -104,8 +105,10 @@ introShort = "Welcome to the Oregon Trail!\n" ++
              "1. Travel the trail \n" ++
              "2. Quit \n"
 
-options =  "1. Travel the trail \n" ++
+option =  "1. Travel the trail \n" ++
            "2. Quit \n"
+
+help = "To play: Type the number of your chosen command and press enter \n"
 
 endGood :: String
 endGood = "You have reached Oregon, Congratulations!\n"

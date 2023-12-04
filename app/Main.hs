@@ -1,12 +1,16 @@
 module Main where
 
-import Control.Monad
-import Control.Monad.State
+-- import Control.Monad
+-- import Control.Monad.State
 import GameState
-import Text ( introShort, options )
+import Text
 import Options
 import GHC.Base (undefined)
 import GameState (initialGameState)
+-- import Control.Monad.RWS (MonadState(put))
+import qualified State as S
+import StateMonad
+import Control.Monad.Cont (MonadIO(liftIO))
 
 main :: IO ()
 main = username >> start
@@ -23,45 +27,54 @@ profession = undefined
 marksmanship :: IO ()
 marksmanship = undefined
 
+-- >>> :k S.execState
+
 start :: IO ()
 start = do
   putStrLn Text.introShort
+  S.execState (S.put initialGameState) undefined
   input <- getLine
   case input of
     "1" -> putStrLn "Travel the trail" >> Main.options
-    "2" -> void (putStrLn "Bye Bye!")
+    "2" -> quit
     _ -> putStrLn "Invalid input, try again \n" >> start
 
 options :: IO ()
 options = do
-  putStrLn Text.options
+  putStrLn Text.option
   input <- getLine
-  case input of
-    "1" -> putStrLn "Travel the trail" >> Main.options
-    "2" -> void (putStrLn "Bye Bye!")
-    _ -> putStrLn "Invalid input, try again \n" >> Main.options
+  s <- liftIO S.get
+  case parseInt input of
+    Just Help -> putStrLn Text.help >> options
+    Just Status -> putStrLn (show s) >> options
+    Just Rest -> putStrLn "You are well rested" >> options
+    Just Quit -> quit
+    Nothing -> putStrLn "Invalid command, try again \n" >> options
+
+quit :: IO ()
+quit = putStrLn "Bye Bye!"
 
 -- Assume this is the main loop of the game
-gameLoop :: GameState -> IO ()
-gameLoop gameState = do
-  putStrLn "Enter a command:"
-  input <- getLine
-  case parseCommand input of
-    Just command -> do
-      let ((), newGameState) = runState (performActionM command) gameState
-      gameLoop newGameState
-    Nothing -> putStrLn "Invalid command" >> gameLoop gameState
+-- gameLoop :: GameState -> IO ()
+-- gameLoop gameState = do
+--   putStrLn "Enter a command:"
+--   input <- getLine
+--   case parseCommand input of
+--     Just command -> do
+--       let ((), newGameState) = runState (performActionM command) gameState
+--       gameLoop newGameState
+--     Nothing -> putStrLn "Invalid command" >> gameLoop gameState
 
 -- | tests using dummy IO data
-test :: IO ()
-test = do
-  putStrLn "Enter a command:"
-  input <- getLine
-  case parseCommand input of
-    Just command -> do
-      let ((), newGameState) = runState (performActionM command) initialGameState
-      print newGameState
-    Nothing -> putStrLn "Invalid command" >> test
+-- test :: IO ()
+-- test = do
+--   putStrLn "Enter a command:"
+--   input <- getLine
+--   case parseCommand input of
+--     Just command -> do
+--       let ((), newGameState) = runState (performActionM command) initialGameState
+--       print newGameState
+--     Nothing -> putStrLn "Invalid command" >> test
 
 -- WIP etc, check documentation
 
