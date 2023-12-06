@@ -100,13 +100,18 @@ intro = "THIS PROGRAM SIMULATES A TRIP OVER THE OREGON TRAIL FROM\n"
 -- textList = ["Welcome to Oregon Trail!", "Choose your profession:", "1. Banker", "2. Carpenter", "3. Farmer"]
 
 introShort :: String
-introShort = "Welcome to the Oregon Trail!\n" ++
-             "You may: \n" ++
-             "1. Travel the trail \n" ++
-             "2. Quit \n"
+introShort = "Welcome to the Oregon Trail!\n"
+        --      "You may: \n" ++
+        --      "1. Travel the trail \n" ++
+        --      "2. Quit \n"
 
-option =  "1. Travel the trail \n" ++
-           "2. Quit \n"
+option =  "You may: \n" ++
+          "1. Travel the trail \n" ++
+          "2. Status \n" ++
+          "3. Shop \n" ++
+          "4. Help \n" ++
+          "5. Change the Pace \n" ++
+          "6. Quit \n"
 
 help = "To play: Type the number of your chosen command and press enter \n"
 

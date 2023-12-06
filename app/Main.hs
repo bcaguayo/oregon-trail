@@ -12,8 +12,12 @@ import qualified State as S
 import StateMonad
 import Control.Monad.Cont (MonadIO(liftIO))
 
+type GS = S.State GameState
+
 main :: IO ()
-main = username >> start
+main = do
+  let initial = S.execState (S.put initialGameState) undefined
+  username >> start >> options initial
 
 username :: IO ()
 username = do
@@ -27,36 +31,52 @@ profession = undefined
 marksmanship :: IO ()
 marksmanship = undefined
 
--- >>> :k S.execState
-
 start :: IO ()
 start = do
   putStrLn Text.introShort
-  -- initialize game state
-  -- S.execState (S.put initialGameState) undefined
-  input <- getLine
-  case input of
-    "1" -> putStrLn "Travel the trail" >> Main.options
-    "2" -> quit
-    _ -> putStrLn "Invalid input, try again \n" >> start
+    -- S.execState (S.put initialGameState) undefined
+  -- input <- getLine
+  -- case input of
+  --   "1" -> putStrLn "Travel the trail" >> Main.options
+  --   "2" -> quit
+  --   _ -> putStrLn "Invalid input, try again \n" >> start
 
-options :: IO ()
-options = do
-  putStrLn Text.option
-  input <- getLine
-  -- get game state
-  -- s <- liftIO S.get
-  case parseInt input of
-    Just Help -> putStrLn Text.help >> options
-    Just Status -> options -- print s -> putStrLn (show s) >> options
-    Just Travel -> putStrLn "Traveling" >> options -- update GS
-    Just Rest -> putStrLn "You are well rested" >> options
-    Just Shop -> putStrLn "You have bought some stuff" >> options -- update Resources
-    Just Quit -> quit
-    Nothing -> putStrLn "Invalid command, try again \n" >> options
+options :: GameState -> IO ()
+options gs
+  | mileage gs > 500 = putStrLn Text.endGood >> quit
+  | date gs > 5 = putStrLn Text.endSlow >> quit
+  | otherwise = do
+      printGameState gs
+      putStrLn Text.option
+      input <- getLine
+      case parseInt input of
+        Just Travel -> 
+          let ((), newGameState) = S.runState (performActionM Travel) gs in
+          putStrLn "Traveling... \n" >> options newGameState
+        Just Status -> printGameState gs >> options gs
+        Just Shop -> 
+          let ((), newGameState) = S.runState (performActionM Shop) gs in
+          putStrLn "You have bought some stuff \n" >> options newGameState -- update Resources
+        Just Help -> putStrLn Text.help >> options gs
+        Just Rest -> case pace gs of
+          Slow -> 
+            let ((), newGameState) = S.runState (performActionM Rest) gs in
+            putStrLn "Going Fast ...\n" >> options newGameState
+          Fast -> 
+            let ((), newGameState) = S.runState (performActionM Rest) gs in
+            putStrLn "Going Slow ...\n" >> options newGameState
+        Just Quit -> quit
+        Nothing -> putStrLn "Invalid command, try again \n" >> options gs
 
 quit :: IO ()
 quit = putStrLn "Bye Bye!"
+
+-- Function to print the current game status
+-- printGameStatus :: GS ()
+-- printGameStatus = do
+--   gameState <- S.get
+--   -- You can use the gameState to print relevant information using printStatus
+--   liftIO $ printStatus gameState
 
 -- Assume this is the main loop of the game
 -- gameLoop :: GameState -> IO ()
@@ -76,13 +96,41 @@ quit = putStrLn "Bye Bye!"
 --   input <- getLine
 --   case parseCommand input of
 --     Just command -> do
---       let ((), newGameState) = runState (performActionM command) initialGameState
---       print newGameState
+--       let (newGameState, ()) = runState (performActionM command) initialGameState
+--       printGameState newGameState
 --     Nothing -> putStrLn "Invalid command" >> test
 
--- WIP etc, check documentation
+printGameState :: GameState -> IO ()
+printGameState gs = do
+  putStrLn "___________________________\nGame State:"
+  putStrLn ("Date: " ++ show (date gs))
+  putStrLn ("Mileage: " ++ show (mileage gs))
+  putStrLn ("Pace: " ++ show (pace gs))
+  putStrLn ("Health: " ++ show (health gs))
+  putStrLn ("Resources: " ++ show (resources gs))
+  putStrLn "___________________________"
 
--- BEGIN: Generate I/O Tests
+-- printGameState' = S $ \gs -> do
+--   putStrLn "___________________________\nGame State:"
+--   putStrLn ("Date: " ++ show (date gs))
+--   putStrLn ("Mileage: " ++ show (mileage gs))
+--   putStrLn ("Pace: " ++ show (pace gs))
+--   putStrLn ("Health: " ++ show (health gs))
+--   putStrLn ("Resources: " ++ show (resources gs))
+--   putStrLn "___________________________"
+
+-- printGameState'' :: GS ()
+-- printGameState'' = do
+--   gs <- S.get
+--   printGameState gs
+
+-- printGameStatus = S.get >>= printGameState
+
+-- >>> printGameState initialGameState
+
+  -- WIP etc, check documentation
+
+  -- BEGIN: Generate I/O Tests
 -- ioTests :: Test
 -- ioTests = TestList
 --     [ TestLabel "Test 1" test1

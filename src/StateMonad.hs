@@ -182,7 +182,10 @@ label1 :: Tree a -> Tree (a, Int)
 label1 t = fst (aux t 0)
   where
     aux :: Tree a -> Store -> (Tree (a, Int), Store)
-    aux = undefined
+    aux (Leaf x) s       = (Leaf (x,s), s + 1)
+    aux (Branch t1 t2) s = let (t1', s')  = aux t1 s
+                               (t2', s'') = aux t2 s'
+                           in (Branch t1' t2', s'')
 
 {-
 Once you have completed the implementation, again test it on the sample tree
@@ -342,7 +345,7 @@ S     :: (Store -> (a,Store)) -> ST2 a
 
 instance Monad ST2 where
   return :: a -> ST2 a
-  return x = S (x,) -- this tuple section (x,) is equivalent to \y -> (x,y)
+  return = pure -- this tuple section (x,) is equivalent to \y -> (x,y)
 
   (>>=) :: ST2 a -> (a -> ST2 b) -> ST2 b
   f >>= g = S $ \s ->
@@ -363,7 +366,7 @@ instance Functor ST2 where
 
 instance Applicative ST2 where
   pure :: a -> ST2 a
-  pure = return
+  pure x = S (x,)
 
   (<*>) :: ST2 (a -> b) -> ST2 a -> ST2 b
   (<*>) = ap
@@ -390,8 +393,13 @@ straightforward to define our tree labeling function.
 -}
 
 mlabel :: Tree a -> ST2 (Tree (a, Int))
-mlabel (Leaf x) = undefined -- use `getST2` and `putST2` here
-mlabel (Branch t1 t2) = undefined
+mlabel (Leaf x) = do c <- getST2
+                     putST2 (c + 1)
+                     return (Leaf (x, c))
+mlabel (Branch t1 t2) = do 
+                        t1' <- mlabel t1
+                        t2' <- mlabel t2
+                        return (Branch t1' t2')
 
 {-
 Try to implement `mlabel` both with and without `do`-notation.

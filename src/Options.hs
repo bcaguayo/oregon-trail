@@ -25,10 +25,10 @@ parseCommand input = case map toLower input of
 -- This is a version that handles Int Commands
 parseInt :: String -> Maybe Command
 parseInt input = case map toLower input of
-    "1" -> Just Help
-    "2" -> Just Quit
-    "3" -> Just Status
-    "4" -> Just Travel
+    "1" -> Just Travel
+    "2" -> Just Status
+    "3" -> Just Shop
+    "4" -> Just Help
     "5" -> Just Rest
-    "6" -> Just Shop
+    "6" -> Just Quit
     _ -> Nothing

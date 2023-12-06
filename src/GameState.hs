@@ -1,6 +1,7 @@
 module GameState where
 
 import Control.Monad.State
+import State as S
 import Data.Map (Map)
 import Data.Type.Nat ( Nat )
 import Resources
@@ -9,6 +10,7 @@ import Test.HUnit
 import Test.QuickCheck ()
 import Text ()
 import Options
+import Locations ( natToDate )
 
 data Pace = Slow | Fast deriving (Show, Eq)
 
@@ -46,13 +48,14 @@ The Dalles to Oregon City: 300 miles (483 kilometers)
 -}
 
 targetMileage :: Nat
-targetMileage = 2000
+targetMileage = 1000
 
 checkParameters :: Nat -> Nat -> Pace -> Bool
 checkParameters date mileage pace =
   validDate date && validMileage mileage -- && validPace pace
 
-type GameStateM = Control.Monad.State.State GameState
+-- type GameStateM = Control.Monad.State.State GameState
+type GameStateM = S.State GameState
 
 {-
 WIP, move Dates code to Events.hs or smth
@@ -147,17 +150,17 @@ checkState gs
 -- | update game state
 updateGameStateM :: GameStateM ()
 updateGameStateM = do
-  gs <- get
+  gs <- S.get
   let newDate = date gs + 1
       newMileage = case pace gs of
         Slow -> mileage gs + paceSlow     -- 95
         Fast -> mileage gs + paceFast     -- 145
-  modify $ \s -> s {date = newDate, mileage = newMileage}
+  S.modify $ \s -> s {date = newDate, mileage = newMileage}
   updateHealthM
   updateResourcesM
 
 updateHealthM :: GameStateM ()
-updateHealthM = modify $ \gs ->
+updateHealthM = S.modify $ \gs ->
   let newHealth = case health gs of
         Healthy -> if isIllConditionMet gs then Ill else Healthy
         Ill -> if isRecoveryConditionMet gs then Healthy else Ill
@@ -174,22 +177,28 @@ isRecoveryConditionMet gs = food (resources gs) > 50
 
 -- | update resources
 updateResourcesM :: GameStateM ()
-updateResourcesM = modify $ \gs ->
+updateResourcesM = S.modify $ \gs ->
   let currentResources = resources gs
       foodConsumption = 5
    in gs {resources = substractResources currentResources Food foodConsumption}
 
 -- | check if game is end
 isGameEndM :: GameStateM Bool
-isGameEndM = gets $ \gs ->
-  mileage gs >= targetMileage
+isGameEndM = do
+  gs <- S.get
+  return $ mileage gs >= targetMileage
     || money (resources gs) <= 0
     || food (resources gs) <= 0
     || health gs == Critical
+  -- gs <- S.get
+  -- return $ mileage gs >= targetMileage
+  --   || money (resources gs) <= 0
+  --   || food (resources gs) <= 0
+  --   || health gs == Critical
 
 -- | handle event
 handleEventM :: GameStateM ()
-handleEventM = modify $ \gs ->
+handleEventM = S.modify $ \gs ->
   case event gs of
     Disease -> gs {health = Ill, resources = substractResources (resources gs) Food 10}
     GoodHarvest -> gs {resources = addResources (resources gs) Food 50}
@@ -203,74 +212,41 @@ performActionM command = case command of
   Quit -> return () -- quit game
   Status -> return () -- show status
   Travel -> travelActionM
-  Rest -> restActionM
+  Rest -> paceActionM
   Shop -> shopActionM
 
 travelActionM, restActionM, shopActionM :: GameStateM ()
-travelActionM = modify $ \gs ->
-  let updatedMileage = mileage gs + travelDistance (pace gs)
-   in gs {mileage = updatedMileage}
-restActionM = modify $ \gs ->
+travelActionM = S.modify $ \gs ->
+  let updatedResources = substractResources (resources gs) Food 5
+      updatedMileage = mileage gs + travelDistance (pace gs)
+      updatedDate = date gs + 1
+  in gs {date = updatedDate, resources = updatedResources, mileage = updatedMileage}
+restActionM = S.modify $ \gs ->
   let improvedHealth = if health gs == Ill then Healthy else health gs
    in gs {health = improvedHealth}
-shopActionM = modify $ \gs ->
-  let gainFood = 30
-      updatedResources = addResources (resources gs) Food gainFood
-   in gs {resources = updatedResources}
+shopActionM = S.modify $ \gs ->
+  let gainFood = 50
+      foodCost = 10
+      updatedResources = addResources (resources gs) Food gainFood 
+      updatedResources' = substractResources updatedResources Money foodCost
+  in gs {resources = updatedResources'}
+
+paceActionM :: GameStateM ()
+paceActionM = S.modify $ \gs ->
+  let updatedPace = case pace gs of
+        Slow -> Fast
+        Fast -> Slow
+  in gs {pace = updatedPace}
 
 -- | return travel distance
 travelDistance :: Pace -> Nat
-travelDistance Slow = 10 -- slow travel, for example 10 miles each time
-travelDistance Fast = 20 -- fast travel, for example 20 miles each time
+travelDistance Slow = 95  -- slow travel, for example 95  miles each time
+travelDistance Fast = 145 -- fast travel, for example 145 miles each time
 
 updateMileage :: GameState -> GameState
 updateMileage gs = case pace gs of
   Slow -> gs {mileage = mileage gs + 7}
   Fast -> gs {mileage = mileage gs + 14}
-
-{-
-March starts 29th (1) and ends 31st (3)
-April starts 1st (4) and ends 30th (34)
-May starts 1st (35) and ends 31st (65)
-June starts 1st (66) and ends 30th (96)
-July starts 1st (97) and ends 31st (127)
-August starts 1st (128) and ends 31st (158)
-September starts 1st (159) and ends 30th (189)
-October starts 1st (190) and ends 31st (220)
-November starts 1st (221) and ends 30th (251)
-December starts 1st (252) and ends 20th (266)
--}
-
-natToDate :: Nat -> String
-natToDate = numtoDate . natToTouple
-
-natToTouple :: Nat -> (Nat, Nat)
-natToTouple n
-  | n >= 1 && n <= 3 = (3, n)
-  | n >= 4 && n <= 34 = (4, n - 3)
-  | n >= 35 && n <= 65 = (5, n - 34)
-  | n >= 66 && n <= 96 = (6, n - 65)
-  | n >= 97 && n <= 127 = (7, n - 96)
-  | n >= 128 && n <= 158 = (8, n - 127)
-  | n >= 159 && n <= 189 = (9, n - 158)
-  | n >= 190 && n <= 220 = (10, n - 189)
-  | n >= 221 && n <= 251 = (11, n - 220)
-  | n >= 252 && n <= 266 = (12, n - 251)
-  | otherwise = error "Invalid date"
-
-numtoDate :: (Nat, Nat) -> String
-numtoDate (month, day) = case month of
-  3 -> "March " ++ show day
-  4 -> "April " ++ show day
-  5 -> "May " ++ show day
-  6 -> "June " ++ show day
-  7 -> "July " ++ show day
-  8 -> "August " ++ show day
-  9 -> "September " ++ show day
-  10 -> "October " ++ show day
-  11 -> "November " ++ show day
-  12 -> "December " ++ show day
-  _ -> error "Invalid date"
 
 -- UPDATE
 update :: GameState -> GameState
@@ -285,50 +261,50 @@ update'' = undefined
 testUpdateGameState :: Test
 testUpdateGameState = TestCase $ do
   let state = initialGameState {date = 1, mileage = 100, pace = Slow}
-  let state' = execState updateGameStateM state
+  let state' = S.execState updateGameStateM state
   assertEqual "Date should increase by 1" 2 (date state')
   assertEqual "Mileage should increase by 10 for Slow pace" 110 (mileage state')
 
 testUpdateHealth :: Test
 testUpdateHealth = TestCase $ do
   let state = initialGameState {health = Healthy, resources = initialResources {food = 5, clothes = 0, money = 800}}
-  let state' = execState updateHealthM state
+  let state' = S.execState updateHealthM state
   assertEqual "Health should change to Ill if food is low" Ill (health state')
 
 testIsGameEnd :: Test
 testIsGameEnd = TestCase $ do
   let state = initialGameState {mileage = targetMileage}
-  let isEnd = evalState isGameEndM state
+  let isEnd = S.evalState isGameEndM state
   assertBool "Game should end when target mileage reached" isEnd
 
 testTravelAction :: Test
 testTravelAction = TestCase $ do
   let initial = initialGameState {mileage = 0, pace = Slow}
-  let state' = execState travelActionM initial
+  let state' = S.execState travelActionM initial
   assertEqual "Slow travel should increase mileage by 10" 10 (mileage state')
 
 testHuntAction :: Test
 testHuntAction = TestCase $ do
   let initial = initialGameState {resources = initialResources {food = 0}}
-  let state' = execState shopActionM initial
+  let state' = S.execState shopActionM initial
   assertEqual "Hunting should increase food by 30" 30 (food (resources state'))
 
 testGameEndMileage :: Test
 testGameEndMileage = TestCase $ do
   let state = initialGameState {mileage = targetMileage}
-  let isEnd = evalState isGameEndM state
+  let isEnd = S.evalState isGameEndM state
   assertBool "Game should end when target mileage reached" isEnd
 
 testGameEndHealth :: Test
 testGameEndHealth = TestCase $ do
   let state = initialGameState {health = Critical}
-  let isEnd = evalState isGameEndM state
+  let isEnd = S.evalState isGameEndM state
   assertBool "Game should end when health is Critical" isEnd
 
 testUpdateResources :: Test
 testUpdateResources = TestCase $ do
   let initial = initialGameState {resources = addResources initialResources Food 10}
-  let state = execState updateResourcesM initial  
+  let state = S.execState updateResourcesM initial  
   assertEqual "Food should decrease by 5 after update" 5 (food (resources state))
 
 res10 = addResources initialResources Food 10

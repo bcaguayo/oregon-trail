@@ -46,10 +46,12 @@ of the `Applicative` and `Monad` typeclasses.
 
 instance Monad (State s) where
   return :: a -> State s a
-  return x = S (x,) -- this tuple section (x,) is equivalent to \y -> (x,y)
-
+  return = pure
+  -- return x =  S (x,)   -- this tuple section (x,) is equivalent to \y -> (x,y)
+  
   (>>=) :: State s a -> (a -> State s b) -> State s b
-  st >>= f = undefined
+  st >>= f = S $ \s -> let (a,s') = runState st s in runState (f a) s'
+
 
 {-
 We also define instances for `Functor` and `Applicative`:
@@ -61,7 +63,7 @@ instance Functor (State s) where
 
 instance Applicative (State s) where
   pure :: a -> State s a
-  pure = return
+  pure x =  S (x,)
   (<*>) :: State s (a -> b) -> State s a -> State s b
   (<*>) = ap
 
@@ -71,14 +73,14 @@ returns the final result,
 -}
 
 evalState :: State s a -> s -> a
-evalState = undefined
+evalState st s = fst (runState st s)
 
 {-
 and the second only returns the final state.
 -}
 
 execState :: State s a -> s -> s
-execState = undefined
+execState st = snd . runState st
 
 {-
 Accessing and Modifying State
@@ -116,7 +118,7 @@ a new state *inside* a state monad. The old state is thrown away.
 -}
 
 modify :: (s -> s) -> State s ()
-modify = undefined
+modify f = get >>= \s -> put (f s)
 
 {-
 [1]: http://hackage.haskell.org/packages/archive/mtl/latest/doc/html/Control-Monad-State-Lazy.html#g:2
