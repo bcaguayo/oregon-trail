@@ -12,12 +12,19 @@ import qualified State as S
 import StateMonad
 import Control.Monad.Cont (MonadIO(liftIO))
 
-type GS = S.State GameState
+play :: IO ()
+play = username >> start >> options initialGameState
+
+-- username :: (InputB m, Output m) => m ()
+-- change putStrLn to output
+-- change getLine to inputB
 
 main :: IO ()
 main = do
-  let initial = S.execState (S.put initialGameState) undefined
-  username >> start >> options initial
+  -- let initial = S.execState (S.put initialGameState) undefined
+  username >> start >> options initialGameState
+  -- S.evalState options' initialGameState 
+  -- fst (S.runState options' initialGameState)
 
 username :: IO ()
 username = do
@@ -41,6 +48,19 @@ start = do
   --   "2" -> quit
   --   _ -> putStrLn "Invalid input, try again \n" >> start
 
+-- options' :: GameStateM (IO ())
+-- options' = do
+--   gs <- S.get
+--   return $ do
+--     printGameState gs
+--     putStrLn "playing ..."
+--     input <- getLine
+--     putStrLn input    
+--     let newGameState = S.execState (performActionM Shop) gs
+--     printGameState newGameState
+
+
+-- | This Game Loop is Cassia Approved
 options :: GameState -> IO ()
 options gs
   | mileage gs > 500 = putStrLn Text.endGood >> quit
@@ -51,19 +71,22 @@ options gs
       input <- getLine
       case parseInt input of
         Just Travel -> 
-          let ((), newGameState) = S.runState (performActionM Travel) gs in
+          let newGameState = S.execState (performActionM Travel) gs in
           putStrLn "Traveling... \n" >> options newGameState
         Just Status -> printGameState gs >> options gs
         Just Shop -> 
-          let ((), newGameState) = S.runState (performActionM Shop) gs in
+          let newGameState = S.execState (performActionM Shop) gs in
           putStrLn "You have bought some stuff \n" >> options newGameState -- update Resources
         Just Help -> putStrLn Text.help >> options gs
-        Just Rest -> case pace gs of
+        Just Rest -> 
+          let newGameState = S.execState (performActionM Rest) gs in
+          putStrLn "Resting... \n" >> options newGameState
+        Just Pace -> case pace gs of
           Slow -> 
-            let ((), newGameState) = S.runState (performActionM Rest) gs in
+            let newGameState = S.execState (performActionM Rest) gs in
             putStrLn "Going Fast ...\n" >> options newGameState
           Fast -> 
-            let ((), newGameState) = S.runState (performActionM Rest) gs in
+            let newGameState = S.execState (performActionM Rest) gs in
             putStrLn "Going Slow ...\n" >> options newGameState
         Just Quit -> quit
         Nothing -> putStrLn "Invalid command, try again \n" >> options gs

@@ -8,6 +8,9 @@ import Data.Maybe (fromMaybe)
 import Data.List (intercalate)
 import System.Random
 
+-- should I do QC for Events?
+-- should I use arbitrary, shrink, gen?
+
 -- | A Modifier stores: 
 -- 1. A ResourceType we want to change
 -- 2. A Bool, True if we want to add, False if we want to substract
@@ -146,11 +149,13 @@ testEventOutcome :: Test
 testEventOutcome = TestCase $
     let huntingResources = (M (Food, True, 10), keepClothes, keepMoney) in
     let hunting = applyEvent zeroResources eventHunting in
-    assertEqual "Event outcome" hunting (applyEvent zeroResources eventHunting)
+    assertEqual "Event Outcome" hunting (applyEvent zeroResources eventHunting)
 
 testEventToString :: Test
 testEventToString = TestCase $
     assertEqual "Event to string" "Hunting: +10 food" (eventToString eventHunting)
+
+
 
 -- END: Event tests
 
@@ -175,8 +180,6 @@ testEventToString = TestCase $
 -- Generate a random event
 -- generateRandomEvent :: String -> Event
 -- generateRandomEvent s = E (s, generateRandomModifiers)
-
-
 
 -- >>> runTestTT eventTests
 -- Counts {cases = 3, tried = 3, errors = 0, failures = 0}

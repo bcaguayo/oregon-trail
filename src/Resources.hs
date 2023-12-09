@@ -51,7 +51,7 @@ zeroResources :: Resources s
 zeroResources = Resources { food = 0, clothes = 0, money = 0 }
 
 initialResources :: Resources s
-initialResources = Resources { food = 0, clothes = 0, money = 800 }
+initialResources = Resources { food = 0, clothes = 0, money = 700 }
 
 initialResources2 :: Resources s
 initialResources2 = Resources { food = 10, clothes = 0, money = 800 }
@@ -64,6 +64,8 @@ addResources r rtype n = case rtype of
     Clothes -> r { clothes = clothes r + n }
     Money -> r { money = money r + n }
 
+
+-- return Left
 substractResources :: Resources s -> ResourceType -> Nat -> Resources s
 substractResources r rtype n = case rtype of
     Food ->    case food r `minus` n of

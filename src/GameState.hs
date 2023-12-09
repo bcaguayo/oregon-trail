@@ -30,23 +30,6 @@ data GameState = GameState
     status :: GameStatus
   } deriving (Eq)
 
-{-
-The exact distance traveled on the Oregon Trail varied depending on the specific 
-route taken and the number of detours or side trips made. 
-However, the average distance from Independence, Missouri, to Oregon City, 
-Oregon, was approximately 2,170 miles (3,490 kilometers). 
-This distance could be as short as 2,000 miles (3,200 kilometers) or as long as 
-2,500 miles (4,000 kilometers), depending on the route.
-
-Missouri River to Fort Kearney: 325 miles (523 kilometers)
-Fort Kearney to Fort Laramie: 250 miles (402 kilometers)
-Fort Laramie to Fort Bridger: 400 miles (644 kilometers)
-Fort Bridger to Fort Boise: 580 miles (933 kilometers)
-Fort Boise to The Dalles: 315 miles (507 kilometers)
-The Dalles to Oregon City: 300 miles (483 kilometers)
-
--}
-
 targetMileage :: Nat
 targetMileage = 1000
 
@@ -57,46 +40,7 @@ checkParameters date mileage pace =
 -- type GameStateM = Control.Monad.State.State GameState
 type GameStateM = S.State GameState
 
-{-
-WIP, move Dates code to Events.hs or smth
-min Date is March 29 (1)
-max Date is December 20 (266)
-
-intermediate Dates are every 14 days
-April 12 (15)
-April 26 (29)
-May 10 (43)
-May 24 (57)
-June 7 (71)
-June 21 (85)
-July 5 (99)
-July 19 (113)
-August 2 (127)
-August 16 (141)
-August 30 (155)
-September 13 (169)
-September 27 (183)
-October 11 (197)
-
-October 25 (211)
-November 8 (225)
-November 22 (239)
-December 6 (253)
-December 20 (266)
-
-without events there are 20 intermediate dates
-which means 20 updates/steps
-
-Pace Fast should reach 2000 miles in 200 days
-so 14 steps, that's 2000 / 14 = 142.85714285714286 miles per step
-let's do 145 miles for fast
-
-Pace Slow shouldn't reach Oregon in time
-so 20 * pace < 2000,
-pace < 100 miles per step
-lets do 95 miles for slow
-
--}
+-- ____________________________________________________________________
 
 validDate :: Nat -> Bool
 validDate date = date >= 1 && date <= 266
@@ -212,7 +156,8 @@ performActionM command = case command of
   Quit -> return () -- quit game
   Status -> return () -- show status
   Travel -> travelActionM
-  Rest -> paceActionM
+  Rest -> restActionM
+  Pace -> paceActionM
   Shop -> shopActionM
 
 travelActionM, restActionM, shopActionM :: GameStateM ()
@@ -332,5 +277,5 @@ tests = TestList [testUpdateGameState, testUpdateHealth, testIsGameEnd, testTrav
 -- >>> runTestTT testUpdateResources
 -- Counts {cases = 1, tried = 1, errors = 0, failures = 0}
 
-main :: IO ()
-main = runTestTT tests >>= print
+runTest :: IO ()
+runTest = runTestTT tests >>= print

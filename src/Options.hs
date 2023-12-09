@@ -1,15 +1,15 @@
-
 module Options where
 
 import Data.Char (toLower)
 
 data Command
     = Help
-    | Quit
     | Status
     | Travel
-    | Rest
     | Shop
+    | Rest
+    | Quit
+    | Pace
     deriving (Eq, Show)
 
 parseCommand :: String -> Maybe Command
@@ -20,6 +20,7 @@ parseCommand input = case map toLower input of
     "travel" -> Just Travel
     "rest" -> Just Rest
     "shop" -> Just Shop
+    "pace" -> Just Pace
     _ -> Nothing
 
 -- This is a version that handles Int Commands
@@ -30,5 +31,6 @@ parseInt input = case map toLower input of
     "3" -> Just Shop
     "4" -> Just Help
     "5" -> Just Rest
-    "6" -> Just Quit
+    "6" -> Just Pace
+    "7" -> Just Quit
     _ -> Nothing

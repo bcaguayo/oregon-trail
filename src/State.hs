@@ -52,7 +52,6 @@ instance Monad (State s) where
   (>>=) :: State s a -> (a -> State s b) -> State s b
   st >>= f = S $ \s -> let (a,s') = runState st s in runState (f a) s'
 
-
 {-
 We also define instances for `Functor` and `Applicative`:
 -}

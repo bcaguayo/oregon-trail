@@ -49,8 +49,10 @@ library
       Text
       Events
       Options
+      Locations
   hs-source-dirs:
       src
+      test
 
 executable oregon-trail-exe
   import:
@@ -69,11 +71,13 @@ test-suite oregon-trail-test
       common-stanza
   type: 
       exitcode-stdio-1.0
-  main-is: 
-      Spec.hs
+  main-is:
+      Main.hs
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       oregon-trail
+  other-modules:
+      GameStateT
 
