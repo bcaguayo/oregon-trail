@@ -56,7 +56,7 @@ itself.
 
 instance Monad TraceBIO where
   return :: a -> TraceBIO a
-  return = Done
+  return = pure
   (>>=) :: TraceBIO a -> (a -> TraceBIO b) -> TraceBIO b
   (>>=) (Done x) k = k x
   -- use bind to put two traces together
@@ -71,7 +71,7 @@ Monad instance.)
 
 instance Applicative TraceBIO where
   pure :: a -> TraceBIO a
-  pure = return
+  pure = Done
   (<*>) :: TraceBIO (a -> b) -> TraceBIO a -> TraceBIO b
   (<*>) = ap
 

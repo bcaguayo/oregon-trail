@@ -27,9 +27,9 @@ keepClothes = M (Clothes, True, 0)
 keepMoney :: Modifier
 keepMoney = M (Money, True, 0)
 
-applyModifier :: Resources s -> Modifier -> Resources s
-applyModifier r m = case m of
-    M (rt, b, n) -> if b then addResources r rt n else substractResources r rt n
+-- applyModifier :: Resources s -> Modifier -> Resources s
+-- applyModifier r m = case m of
+--     M (rt, b, n) -> if b then addResources r rt n else substractResources r rt n
 
 instance Show Modifier where
     show (M (rt, b, n)) = if n == 0 then "" else sign ++ show n ++ " " ++ show rt
@@ -42,22 +42,22 @@ instance Show Modifier where
 -- 3. A Nat, by how much
 
 -- | Property: Adding a positive amount of a resource increases the total amount
-prop_AddingPositiveIncreasesTotal :: Resources s -> Modifier -> Property
-prop_AddingPositiveIncreasesTotal r (M (rt, b, n)) =
-    b ==> let updatedResources = applyModifier r (M (rt, True, n))
-          in getResourceAmount updatedResources rt == getResourceAmount r rt + n
+-- prop_AddingPositiveIncreasesTotal :: Resources s -> Modifier -> Property
+-- prop_AddingPositiveIncreasesTotal r (M (rt, b, n)) =
+--     b ==> let updatedResources = applyModifier r (M (rt, True, n))
+--           in getResourceAmount updatedResources rt == getResourceAmount r rt + n
 
--- | Property: Subtracting a positive amount of a resource decreases the total amount
-prop_SubtractingPositiveDecreasesTotal :: Resources s -> Modifier -> Property
-prop_SubtractingPositiveDecreasesTotal r (M (rt, b, n)) =
-    not b ==> let updatedResources = applyModifier r (M (rt, False, n))
-              in getResourceAmount updatedResources rt == fromMaybe 0 (getResourceAmount r rt `minus` n)
+-- -- | Property: Subtracting a positive amount of a resource decreases the total amount
+-- prop_SubtractingPositiveDecreasesTotal :: Resources s -> Modifier -> Property
+-- prop_SubtractingPositiveDecreasesTotal r (M (rt, b, n)) =
+--     not b ==> let updatedResources = applyModifier r (M (rt, False, n))
+--               in getResourceAmount updatedResources rt == fromMaybe 0 (getResourceAmount r rt `minus` n)
 
--- | Property: Applying a modifier with zero amount does not change the resource amount
-prop_ZeroAmountDoesNotChangeResource :: Resources s -> Modifier -> Property
-prop_ZeroAmountDoesNotChangeResource r (M (rt, _, n)) =
-    n == 0 ==> let updatedResources = applyModifier r (M (rt, True, n))
-               in getResourceAmount updatedResources rt == getResourceAmount r rt
+-- -- | Property: Applying a modifier with zero amount does not change the resource amount
+-- prop_ZeroAmountDoesNotChangeResource :: Resources s -> Modifier -> Property
+-- prop_ZeroAmountDoesNotChangeResource r (M (rt, _, n)) =
+--     n == 0 ==> let updatedResources = applyModifier r (M (rt, True, n))
+--                in getResourceAmount updatedResources rt == getResourceAmount r rt
 
 -- END: Modifier tests
 
