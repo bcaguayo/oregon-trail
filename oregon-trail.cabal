@@ -45,7 +45,6 @@ library
       State
       StateMonad
       GameState
-      Resources
       Text
       Events
       Options

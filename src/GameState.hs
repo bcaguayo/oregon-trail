@@ -24,8 +24,6 @@ data Pace = Slow | Fast deriving (Show, Eq)
 
 data HealthStatus = Healthy | Ill | Critical deriving (Show, Eq)
 
-data Event = None | Disease | BadWeather | GoodHarvest deriving (Show, Eq)
-
 data GameStatus = Playing | GameOver | GameEnd deriving (Show, Eq)
 
 data GameState = GameState
@@ -34,7 +32,6 @@ data GameState = GameState
     pace :: Pace,
     health :: HealthStatus,
     resources :: Resources ResourceType,
-    event :: Event,
     status :: GameStatus
   }
   deriving (Eq)
@@ -76,8 +73,6 @@ instance Show GameState where
       ++ show (health gs)
       ++ ", Resources: "
       ++ show (resources gs)
-      ++ ", Event: "
-      ++ show (event gs)
       ++ "\n"
 
 -- START=
@@ -89,7 +84,6 @@ initialGameState =
       pace = Slow,
       health = Healthy,
       resources = initialResources,
-      event = None,
       status = Playing
     }
 
@@ -123,7 +117,7 @@ updateHealthM = lift $ S.modify $ \gs ->
 
 -- | check if ill condition is met
 isIllConditionMet :: GameState -> Bool
-isIllConditionMet gs = food (resources gs) < 10 || event gs == Disease
+isIllConditionMet gs = food (resources gs) < 10
 
 -- | check if recovery condition is met
 isRecoveryConditionMet :: GameState -> Bool
@@ -160,20 +154,20 @@ isGameEndM = do
 --   || health gs == Critical
 
 -- | handle event
-handleEventM :: GameStateM ()
-handleEventM = do
-  gs <- lift S.get
-  case event gs of
-    Disease -> do
-      newResources <- substractResources (resources gs) Food 10
-      lift $ S.put $ gs {health = Ill, resources = newResources}
-    GoodHarvest -> do
-      newResources <- addResources (resources gs) Food 50
-      lift $ S.put $ gs {resources = newResources}
-    BadWeather -> do
-      newResources <- substractResources (resources gs) Food 20
-      lift $ S.put $ gs {resources = newResources}
-    _ -> return ()
+-- handleEventM :: GameStateM ()
+-- handleEventM = do
+--   gs <- lift S.get
+--   case event gs of
+--     Disease -> do
+--       newResources <- substractResources (resources gs) Food 10
+--       lift $ S.put $ gs {health = Ill, resources = newResources}
+--     GoodHarvest -> do
+--       newResources <- addResources (resources gs) Food 50
+--       lift $ S.put $ gs {resources = newResources}
+--     BadWeather -> do
+--       newResources <- substractResources (resources gs) Food 20
+--       lift $ S.put $ gs {resources = newResources}
+--     _ -> return ()
 
 -- | handle user input
 performActionM :: Command -> GameStateM ()

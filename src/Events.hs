@@ -1,6 +1,6 @@
 module Events where
 
-import Resources
+import GameState
 import Data.Type.Nat
 import Test.HUnit
 import Test.QuickCheck
