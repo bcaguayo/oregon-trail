@@ -6,9 +6,9 @@ import Control.Monad.Except
 import Control.Monad.State
 import Data.Map (Map)
 import Data.Type.Nat (Nat)
-import Resources
 import Locations (natToDate)
 import Options
+import Resources
 import State as S
 import Test.HUnit
   ( State,
@@ -238,8 +238,8 @@ update'' = undefined
 -- >>> runTestTT testUpdateResources
 -- Counts {cases = 1, tried = 1, errors = 0, failures = 0}
 
-runTest :: IO ()
-runTest = runTestTT tests >>= print
+-- runTest :: IO ()
+-- runTest = runTestTT tests >>= print
 
 -- Resource Functions
 addResources :: Resources s -> ResourceType -> Nat -> ExceptT String (S.State GameState) (Resources s)
