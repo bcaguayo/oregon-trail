@@ -1,4 +1,4 @@
-module Main where
+module Testing where
 
 import Test.HUnit
 import Test.QuickCheck

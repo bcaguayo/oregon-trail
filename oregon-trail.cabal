@@ -50,6 +50,8 @@ library
       Events
       Options
       Locations
+      Shop
+      Trace
   hs-source-dirs:
       src
       test
@@ -72,7 +74,7 @@ test-suite oregon-trail-test
   type: 
       exitcode-stdio-1.0
   main-is:
-      Main.hs
+      Testing.hs
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
