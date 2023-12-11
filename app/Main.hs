@@ -2,15 +2,18 @@ module Main where
 
 -- import Control.Monad
 -- import Control.Monad.State
-import GameState
-import Text
-import Options
-import GHC.Base (undefined)
-import GameState (initialGameState)
+-- import GameState
+
 -- import Control.Monad.RWS (MonadState(put))
-import qualified State as S
+
+import Control.Monad.Cont (MonadIO (liftIO))
+import Control.Monad.Except
+import GHC.Base (undefined)
+import GameState
+import Options
+import State qualified as S
 import StateMonad
-import Control.Monad.Cont (MonadIO(liftIO))
+import Text
 
 play :: IO ()
 play = username >> start >> options initialGameState
@@ -23,8 +26,9 @@ main :: IO ()
 main = do
   -- let initial = S.execState (S.put initialGameState) undefined
   username >> start >> options initialGameState
-  -- S.evalState options' initialGameState 
-  -- fst (S.runState options' initialGameState)
+
+-- S.evalState options' initialGameState
+-- fst (S.runState options' initialGameState)
 
 username :: IO ()
 username = do
@@ -41,12 +45,13 @@ marksmanship = undefined
 start :: IO ()
 start = do
   putStrLn Text.introShort
-    -- S.execState (S.put initialGameState) undefined
-  -- input <- getLine
-  -- case input of
-  --   "1" -> putStrLn "Travel the trail" >> Main.options
-  --   "2" -> quit
-  --   _ -> putStrLn "Invalid input, try again \n" >> start
+
+-- S.execState (S.put initialGameState) undefined
+-- input <- getLine
+-- case input of
+--   "1" -> putStrLn "Travel the trail" >> Main.options
+--   "2" -> quit
+--   _ -> putStrLn "Invalid input, try again \n" >> start
 
 -- options' :: GameStateM (IO ())
 -- options' = do
@@ -55,10 +60,9 @@ start = do
 --     printGameState gs
 --     putStrLn "playing ..."
 --     input <- getLine
---     putStrLn input    
+--     putStrLn input
 --     let newGameState = S.execState (performActionM Shop) gs
 --     printGameState newGameState
-
 
 -- | This Game Loop is Cassia Approved
 options :: GameState -> IO ()
@@ -70,24 +74,29 @@ options gs
       putStrLn Text.option
       input <- getLine
       case parseInt input of
-        Just Travel -> 
-          let newGameState = S.execState (performActionM Travel) gs in
-          putStrLn "Traveling... \n" >> options newGameState
+        Just Travel -> do
+          let newGameState = S.runState (runExceptT (performActionM Travel)) gs
+          case newGameState of
+            (Left errMsg, _) -> putStrLn errMsg >> options gs
+            (Right _, updatedGameState) -> putStrLn "Traveling... \n" >> options updatedGameState
         Just Status -> printGameState gs >> options gs
-        Just Shop -> 
-          let newGameState = S.execState (performActionM Shop) gs in
-          putStrLn "You have bought some stuff \n" >> options newGameState -- update Resources
+        Just Shop -> do
+          let newGameState = S.runState (runExceptT (performActionM Shop)) gs
+          case newGameState of
+            (Left errMsg, _) -> putStrLn errMsg >> options gs
+            (Right _, updatedGameState) -> putStrLn "You have bought some stuff \n" >> options updatedGameState
         Just Help -> putStrLn Text.help >> options gs
-        Just Rest -> 
-          let newGameState = S.execState (performActionM Rest) gs in
-          putStrLn "Resting... \n" >> options newGameState
-        Just Pace -> case pace gs of
-          Slow -> 
-            let newGameState = S.execState (performActionM Rest) gs in
-            putStrLn "Going Fast ...\n" >> options newGameState
-          Fast -> 
-            let newGameState = S.execState (performActionM Rest) gs in
-            putStrLn "Going Slow ...\n" >> options newGameState
+        Just Rest -> do
+          let newGameState = S.runState (runExceptT (performActionM Rest)) gs
+          case newGameState of
+            (Left errMsg, _) -> putStrLn errMsg >> options gs
+            (Right _, updatedGameState) -> putStrLn "Resting... \n" >> options updatedGameState
+        Just Pace -> do
+          let newGameState = S.runState (runExceptT (performActionM Pace)) gs
+          case newGameState of
+            (Left errMsg, _) -> putStrLn errMsg >> options gs
+            (Right _, updatedGameState) ->
+              putStrLn (if pace updatedGameState == Slow then "Going Slow ...\n" else "Going Fast ...\n") >> options updatedGameState
         Just Quit -> quit
         Nothing -> putStrLn "Invalid command, try again \n" >> options gs
 
@@ -122,7 +131,6 @@ quit = putStrLn "Bye Bye!"
 --       let (newGameState, ()) = runState (performActionM command) initialGameState
 --       printGameState newGameState
 --     Nothing -> putStrLn "Invalid command" >> test
-
 printGameState :: GameState -> IO ()
 printGameState gs = do
   putStrLn "___________________________\nGame State:"
@@ -151,9 +159,9 @@ printGameState gs = do
 
 -- >>> printGameState initialGameState
 
-  -- WIP etc, check documentation
+-- WIP etc, check documentation
 
-  -- BEGIN: Generate I/O Tests
+-- BEGIN: Generate I/O Tests
 -- ioTests :: Test
 -- ioTests = TestList
 --     [ TestLabel "Test 1" test1
@@ -266,6 +274,5 @@ instance Arbitrary Player where
   arbitrary = elements [X, O]
 instance Arbitrary Location where
   arbitrary = elements locations
-
 
 -}

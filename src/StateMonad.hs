@@ -26,17 +26,17 @@ be building off this module in many ways the rest of the semester.
 module StateMonad where
 
 import Control.Monad (ap, liftM)
-import qualified Data.IORef as IO
+import Data.IORef qualified as IO
 import Data.Map (Map)
-import qualified Data.Map as Map
-import qualified Data.Maybe as Maybe
+import Data.Map qualified as Map
+import Data.Maybe qualified as Maybe
 {-
 This module depends on an auxiliary module [State](State.html) that we will define later.
 We'll qualify imports from this module with `S.` so that you can see where they
 come from.
 -}
 
-import qualified State as S
+import State qualified as S
 
 {-
 State Transformations
@@ -182,10 +182,11 @@ label1 :: Tree a -> Tree (a, Int)
 label1 t = fst (aux t 0)
   where
     aux :: Tree a -> Store -> (Tree (a, Int), Store)
-    aux (Leaf x) s       = (Leaf (x,s), s + 1)
-    aux (Branch t1 t2) s = let (t1', s')  = aux t1 s
-                               (t2', s'') = aux t2 s'
-                           in (Branch t1' t2', s'')
+    aux (Leaf x) s = (Leaf (x, s), s + 1)
+    aux (Branch t1 t2) s =
+      let (t1', s') = aux t1 s
+          (t2', s'') = aux t2 s'
+       in (Branch t1' t2', s'')
 
 {-
 Once you have completed the implementation, again test it on the sample tree
@@ -382,7 +383,7 @@ getST2 :: ST2 Store
 getST2 = S $ \s -> (s, s)
 
 putST2 :: Store -> ST2 ()
-putST2 s = S $ \_ -> ((), s)
+putST2 s = S $ const ((), s)
 
 {-
 These functions are additional useful operations for the `ST2` type. (The fact
@@ -393,13 +394,14 @@ straightforward to define our tree labeling function.
 -}
 
 mlabel :: Tree a -> ST2 (Tree (a, Int))
-mlabel (Leaf x) = do c <- getST2
-                     putST2 (c + 1)
-                     return (Leaf (x, c))
-mlabel (Branch t1 t2) = do 
-                        t1' <- mlabel t1
-                        t2' <- mlabel t2
-                        return (Branch t1' t2')
+mlabel (Leaf x) = do
+  c <- getST2
+  putST2 (c + 1)
+  return (Leaf (x, c))
+mlabel (Branch t1 t2) = do
+  t1' <- mlabel t1
+  t2' <- mlabel t2
+  return (Branch t1' t2')
 
 {-
 Try to implement `mlabel` both with and without `do`-notation.
@@ -438,7 +440,7 @@ type Store = (Int, Int)
 and so on.
 
 Therefore, we would like to write reusable code that will work with
-*any* type of store.
+\*any* type of store.
 
 The file [State](State.html) contains a generic library for that purpose.
 You should switch to that file now and read it before moving on.
@@ -520,24 +522,24 @@ Similarly, we want an action that updates the frequency of a given
 element `k`.
 -}
 
-updFreqM :: Ord a => a -> S.State (MySt a) ()
+updFreqM :: (Ord a) => a -> S.State (MySt a) ()
 updFreqM k = do
   m <- S.get
   let freq' = update k (freq m)
   S.put (m {freq = freq'})
-
-  where update = undefined
+  where
+    update = undefined
 
 -- update :: Ord a => a -> Map a Int -> Map a Int
 -- update k m = case lookup k m of
 --   Just n -> m {k = n + 1}
---   Nothing -> m {k = 1} 
+--   Nothing -> m {k = 1}
 
 {-
 And with these two, we are done
 -}
 
-mlabelM :: Ord a => Tree a -> S.State (MySt a) (Tree (a, Int))
+mlabelM :: (Ord a) => Tree a -> S.State (MySt a) (Tree (a, Int))
 mlabelM (Leaf x) = do
   c <- updateIndexM
   updFreqM x
