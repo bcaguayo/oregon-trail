@@ -138,8 +138,8 @@ eventTests = TestList
     , testEventToString
     ]
 
-eventHunting :: Event
-eventHunting = E ("Hunting", (M (Food, True, 10), keepClothes, keepMoney))
+-- eventHunting :: Event
+-- eventHunting = E ("Hunting", (M (Food, True, 10), keepClothes, keepMoney))
 
 testEventDescription :: Test
 testEventDescription = TestCase $
@@ -180,6 +180,9 @@ eventRaiders :: Event
 eventRaiders = E ("A group of Raiders corner your wagon", riverMod) where
     gen = mkStdGen 42
     riverMod = (keepFood, keepClothes, genRandomModifier gen Money 100)
+
+eventHunting :: Event
+eventHunting = E ("Hunting", (M (Food, True, 10), keepClothes, keepMoney))
 
 generateRandomMoneyModifier :: RandomGen g => g -> Int -> (Modifier, g)
 generateRandomMoneyModifier gen n =

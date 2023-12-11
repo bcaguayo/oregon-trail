@@ -90,6 +90,9 @@ tests =
       testGameEndHealth,
       testUpdateResources
     ]
+
+runTest :: IO ()
+runTest = runTestTT tests >>= print
 {-
 import Test.HUnit
 import Test.QuickCheck

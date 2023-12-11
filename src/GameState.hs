@@ -38,7 +38,7 @@ data GameState = GameState
   deriving (Eq)
 
 targetMileage :: Nat
-targetMileage = 1000
+targetMileage = 2170
 
 checkParameters :: Nat -> Nat -> Pace -> Bool
 checkParameters date mileage pace =
@@ -88,13 +88,15 @@ initialGameState =
       status = Playing
     }
 
-checkState :: GameState -> GameStatus
+checkState :: GameState -> GameState
 checkState gs
-  | date gs > 266 = GameOver
-  | mileage gs >= targetMileage = GameEnd
-  | food (resources gs) <= 0 = GameOver
-  | health gs == Critical = GameOver
-  | otherwise = Playing
+  | date gs > 266 = gsO
+  | mileage gs >= targetMileage = gsE
+  | food (resources gs) <= 0 = gsO
+  | health gs == Critical = gsO
+  | otherwise = gs where
+    gsE = gs { status = GameEnd }
+    gsO = gs { status = GameOver }
 
 -- | update game state
 updateGameStateM :: GameStateM ()
@@ -237,9 +239,6 @@ update'' = undefined
 
 -- >>> runTestTT testUpdateResources
 -- Counts {cases = 1, tried = 1, errors = 0, failures = 0}
-
--- runTest :: IO ()
--- runTest = runTestTT tests >>= print
 
 -- Resource Functions
 addResources :: Resources s -> ResourceType -> Nat -> ExceptT String (S.State GameState) (Resources s)
