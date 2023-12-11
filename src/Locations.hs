@@ -6,7 +6,7 @@ import Options
 
 -- LOCATIONS
 
-data LocationType = Town  | River | Fort | Road deriving (Eq, Ord, Show)
+data LocationType = Town | River | Fort | Road deriving (Eq, Ord, Show)
 
 data Location = 
     Independence 
@@ -31,6 +31,8 @@ getOptions Fort = [Help, Status, Travel, Rest, Quit]
 getOptions River = [Help, Status, Travel, Quit]
 
 -- locationsToOptions :: String -> [Command]
+
+-- instance Show Location 
 
 printLocation :: Location -> String
 printLocation Independence = "Independence, Missouri"

@@ -35,10 +35,11 @@ Basic Functionality:
 main :: IO ()
 main = play
 
+-- for IO, isolate input output
 play :: IO ()
 play = do
   output T.version
-  username
+  username -- output "Enter your name: " >>= inputb >>= output . ("Hello, " ++) >> output "!"
   output T.introShort
   instructions
   update initialGameState
@@ -116,6 +117,8 @@ handleInput input gs =
     Just Quit -> quit
     Nothing -> output "Invalid command, try again \n" >> update gs
 
+-- define as string
+
 printLocation :: GameState -> IO ()
 printLocation gs = do
   output ("________{ " ++ getLocation (mileage gs) ++ " }________\n")
@@ -134,6 +137,10 @@ printGameState gs = do
   output ("Health: " ++ show (health gs))
   output ("Resources: " ++ show (resources gs))
   output "___________________________"
+
+shopping :: GameState -> IO ()
+shopping gs = undefined
+
 
 -- doEvent :: IO ()
 -- doEvent = do

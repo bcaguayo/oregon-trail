@@ -115,3 +115,9 @@ Vince:
 Miles:
 - Change "Insufficient Food" to be a FrontEnd Print instead of an error
 - Events Tests
+
+
+WIP:
+- Shopping
+- Events
+- Locations
