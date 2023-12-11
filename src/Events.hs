@@ -1,12 +1,12 @@
 module Events where
 
-import GameState
+import Resources
 import Data.Type.Nat
 import Test.HUnit
 import Test.QuickCheck
 import Data.Maybe (fromMaybe)
 import Data.List (intercalate)
-import System.Random
+import System.Random ( Random(random, randomR), RandomGen, mkStdGen )
 
 -- should I do QC for Events?
 -- should I use arbitrary, shrink, gen?
@@ -167,15 +167,7 @@ testEventToString = TestCase $
 --         (m3, _) = generateRandomModifier gen2
 --     return (m1, m2, m3)
 
--- generateRandomModifier :: RandomGen g => g -> (Modifier, g)
--- generateRandomModifier gen =
---     let (value, gen') = randomR (0, 100) gen
---         (isPositive, gen'') = random gen'
---         resourceType = case (randomR (0, 2) gen'') of
---             0 -> Food
---             1 -> Clothes
---             2 -> Money
---     in (M (resourceType, isPositive, (fromIntegral value)), gen'')
+
 
 -- Generate a random event
 -- generateRandomEvent :: String -> Event
@@ -183,3 +175,57 @@ testEventToString = TestCase $
 
 -- >>> runTestTT eventTests
 -- Counts {cases = 3, tried = 3, errors = 0, failures = 0}
+
+eventRaiders :: Event
+eventRaiders = E ("A group of Raiders corner your wagon", riverMod) where
+    gen = mkStdGen 42
+    riverMod = (keepFood, keepClothes, genRandomModifier gen Money 100)
+
+generateRandomMoneyModifier :: RandomGen g => g -> Int -> (Modifier, g)
+generateRandomMoneyModifier gen n =
+    let (value, gen') = randomR (0, n) gen
+        (isPositive, gen'') = random gen'
+    in (M (Money, isPositive, fromIntegral value), gen'')
+
+genRandomModifier :: RandomGen g => g -> ResourceType -> Int -> Modifier
+genRandomModifier gen res n =
+    let (value, gen') = randomR (0, n) gen
+        (isPositive, gen'') = random gen'
+    in M (res, isPositive, fromIntegral value)
+
+-- genRandomModifier :: Nat -> Modifier
+-- genRandomModifier n = do
+--     let gen = mkStdGen 42
+--         (value, gen') = randomR (0, n) gen
+--         (positive, gen'') = random gen'
+--         resourceType = case randomR (0, 2) gen'' of
+--             0 -> Food
+--             1 -> Clothes
+--             _ -> Money
+--     return (M (resourceType, positive, value))
+
+-- genBoundedModifier :: ResourceType -> Nat -> Modifier
+-- genBoundedModifier res n = do
+--     (gen, _) <- newStdGen
+--     let (value, gen') = randomR (0, n) gen
+--         (positive, gen'') = random gen'  
+--     return (M (res, positive, value))
+
+-- generateRandomModifier :: RandomGen g => g -> Int -> (Modifier, g)
+-- generateRandomModifier gen n =
+--     let (value, gen') = randomR (0, n) gen
+--         (isPositive, gen'') = random gen'
+--         resourceType = case randomR (0, 2) gen'' of
+--             0 -> Food
+--             1 -> Clothes
+--             _ -> Money
+--     in (M (resourceType, isPositive, fromIntegral value), gen'')
+
+-- generateBoundedModifier :: RandomGen g => g -> ResourceType -> Nat -> (Modifier, g)
+-- generateBoundedModifier gen res n =
+--     let (value, gen') = randomR (0, n) gen
+--         (isPositive, gen'') = random gen'
+--     in (M (res, isPositive, fromIntegral value), gen'')
+
+-- generateEvent :: IO()
+-- generateEvent = 

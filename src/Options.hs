@@ -5,11 +5,19 @@ import Data.Char (toLower)
 data Command
     = Help
     | Status
+    | Pace
     | Travel
     | Shop
     | Rest
+    | Hunt
     | Quit
-    | Pace
+    deriving (Eq, Show)
+
+data ShopCommand
+    = BuyFood
+    | BuyClothes
+    | BuyMedicine
+    | Leave
     deriving (Eq, Show)
 
 parseCommand :: String -> Maybe Command
@@ -34,3 +42,5 @@ parseInt input = case map toLower input of
     "6" -> Just Pace
     "7" -> Just Quit
     _ -> Nothing
+
+

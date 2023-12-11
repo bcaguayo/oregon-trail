@@ -51,6 +51,7 @@ library
       Locations
       Shop
       Trace
+      Resources
   hs-source-dirs:
       src
       test

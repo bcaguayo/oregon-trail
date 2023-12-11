@@ -6,7 +6,6 @@ import GameState
       initialGameState,
       performActionM )
 import Options
-    ( Command(Quit, Travel, Status, Shop, Help, Rest, Pace), parseInt )
 import GHC.Base (undefined)
 -- import Control.Monad.RWS (MonadState(put))
 
@@ -14,17 +13,19 @@ import Control.Monad.Cont (MonadIO (liftIO))
 import Control.Monad.Except
 import GHC.Base (undefined)
 import GameState
-import Options
-import State qualified as S
+-- | This module imports the 'State' module and qualifies it with the alias 'S'.
+import qualified State as S
 import StateMonad
 import Control.Monad.Cont (MonadIO(liftIO))
-import Text
+import qualified Text as T
+import Trace
+import Locations (getLocation)
 
 {-
 Basic Functionality:
 
 1. Print intro
-2. Print options
+2. Print update
 3. Get user input
 4. Loop until game is over
 (mileage or date)
@@ -36,17 +37,17 @@ main = play
 
 play :: IO ()
 play = do
-  putStrLn Text.version
+  output T.version
   username
-  putStrLn Text.introShort
+  output T.introShort
   instructions
-  options initialGameState
+  update initialGameState
 
 username :: IO ()
 username = do
-  putStrLn "Enter your name: "
-  name <- getLine
-  putStrLn ("Hello, " ++ name ++ "!")
+  output "Enter your name: "
+  name <- inputb
+  output ("Hello, " ++ name ++ "!")
 
 profession :: IO ()
 profession = undefined
@@ -56,66 +57,85 @@ marksmanship = undefined
 
 instructions :: IO ()
 instructions = do
-  putStrLn Text.instructions1
-  input <- getLine
+  output T.instructions1
+  input <- inputb
   case input of
-    "yes" -> putStrLn Text.instructions2
-    "no" -> putStrLn "Good luck! \n"
-    _ -> putStrLn "Invalid command, try again" >> instructions
+    "yes" -> output T.instructions2
+    "no" -> output "Good luck! \n"
+    _ -> output "Invalid command, try again" >> instructions
 
 -- | This Game Loop is Cassia Approved
-options :: GameState -> IO ()
-options gs
-  | mileage gs > 500 = putStrLn Text.endGood >> quit
-  | date gs > 5 = putStrLn Text.endSlow >> quit
+update :: GameState -> IO ()
+update gs
+  | mileage gs > 2040 = output T.endGood >> quit
+  | date gs > 266 = output T.endSlow >> quit
   | otherwise = do
       printLocation gs
-      putStrLn Text.option
-      input <- getLine
-      case parseInt input of
-        Just Travel -> do
-          let newGameState = S.runState (runExceptT (performActionM Travel)) gs
-          case newGameState of
-            (Left errMsg, _) -> putStrLn errMsg >> options gs
-            (Right _, updatedGameState) -> putStrLn "Traveling... \n" >> options updatedGameState
-        Just Status -> printGameState gs >> options gs
-        Just Shop -> do
-          let newGameState = S.runState (runExceptT (performActionM Shop)) gs
-          case newGameState of
-            (Left errMsg, _) -> putStrLn errMsg >> options gs
-            (Right _, updatedGameState) -> putStrLn "You have bought some stuff \n" >> options updatedGameState
-        Just Help -> putStrLn Text.help >> options gs
-        Just Rest -> do
-          let newGameState = S.runState (runExceptT (performActionM Rest)) gs
-          case newGameState of
-            (Left errMsg, _) -> putStrLn errMsg >> options gs
-            (Right _, updatedGameState) -> putStrLn "Resting... \n" >> options updatedGameState
-        Just Pace -> do
-          let newGameState = S.runState (runExceptT (performActionM Pace)) gs
-          case newGameState of
-            (Left errMsg, _) -> putStrLn errMsg >> options gs
-            (Right _, updatedGameState) ->
-              putStrLn (if pace updatedGameState == Slow then "Going Slow ...\n" else "Going Fast ...\n") >> options updatedGameState
-        Just Quit -> quit
-        Nothing -> putStrLn "Invalid command, try again \n" >> options gs
+      output T.option
+      input <- inputb
+      handleInput input gs
 
 quit :: IO ()
-quit = putStrLn "Bye Bye!"
+quit = output "Bye Bye!"
+
+handleInput :: String -> GameState -> IO ()
+handleInput input gs =
+  case parseInt input of
+    Just Travel -> do
+      let newGameState = S.runState (runExceptT (performActionM Travel)) gs
+      case newGameState of
+        (Left errMsg, _) -> output errMsg >> update gs
+        (Right _, updatedGameState) ->
+          output "Traveling... \n" >> update (nextDate updatedGameState)
+    Just Status -> printGameState gs >> update gs
+    Just Shop -> do
+      let newGameState = S.runState (runExceptT (performActionM Shop)) gs
+      case newGameState of
+        (Left errMsg, _) -> output errMsg >> update gs
+        (Right _, updatedGameState) ->
+          output "You have bought some stuff \n" >> update updatedGameState
+    Just Help -> output T.help >> update gs
+    Just Hunt -> do
+      let newGameState = S.runState (runExceptT (performActionM Hunt)) gs
+      case newGameState of
+        (Left errMsg, _) -> output errMsg >> update gs
+        (Right _, updatedGameState) ->
+          output "Hunting... \n" >> update (newDate updatedGameState)
+    Just Rest -> do
+      let newGameState = S.runState (runExceptT (performActionM Rest)) gs
+      case newGameState of
+        (Left errMsg, _) -> output errMsg >> update gs
+        (Right _, updatedGameState) ->
+          output "Resting... \n" >> update (newDate updatedGameState)
+    Just Pace -> do
+      let newGameState = S.runState (runExceptT (performActionM Pace)) gs
+      case newGameState of
+        (Left errMsg, _) -> output errMsg >> update gs
+        (Right _, updatedGameState) ->
+          output (if pace updatedGameState == Slow then "Going Slow ...\n" else "Going Fast ...\n") >> update updatedGameState
+    Just Quit -> quit
+    Nothing -> output "Invalid command, try again \n" >> update gs
 
 printLocation :: GameState -> IO ()
 printLocation gs = do
-  putStrLn "___________________________\n"
-  -- putStrLn ("Location: " ++ "not implemented")
-  putStrLn ("Date: " ++ show (date gs))
-  putStrLn ("Mileage: " ++ show (mileage gs))
-  putStrLn "___________________________"
+  output ("________{ " ++ getLocation (mileage gs) ++ " }________\n")
+  output "___________________________\n"
+  -- output ("Location: " ++ "not implemented")
+  output ("Date: " ++ show (date gs))
+  output ("Mileage: " ++ show (mileage gs))
+  output "___________________________"
 
 printGameState :: GameState -> IO ()
 printGameState gs = do
-  putStrLn "___________________________\nGame State:"
-  putStrLn ("Date: " ++ show (date gs))
-  putStrLn ("Mileage: " ++ show (mileage gs))
-  putStrLn ("Pace: " ++ show (pace gs))
-  putStrLn ("Health: " ++ show (health gs))
-  putStrLn ("Resources: " ++ show (resources gs))
-  putStrLn "___________________________"
+  output "___________________________\nGame State:"
+  output ("Date: " ++ show (date gs))
+  output ("Mileage: " ++ show (mileage gs))
+  output ("Pace: " ++ show (pace gs))
+  output ("Health: " ++ show (health gs))
+  output ("Resources: " ++ show (resources gs))
+  output "___________________________"
+
+doEvent :: IO ()
+doEvent = do
+  gen <- newStdGen
+  if random gen then output "You found a river" else output "You found a town"

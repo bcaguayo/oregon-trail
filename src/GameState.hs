@@ -6,6 +6,7 @@ import Control.Monad.Except
 import Control.Monad.State
 import Data.Map (Map)
 import Data.Type.Nat (Nat)
+import Resources
 import Locations (natToDate)
 import Options
 import State as S
@@ -60,6 +61,8 @@ paceFast = 145
 
 paceSlow :: Nat
 paceSlow = 95
+
+
 
 instance Show GameState where
   show gs =
@@ -147,28 +150,6 @@ isGameEndM = do
       || food (resources gs) <= 0
       || health gs == Critical
 
--- gs <- S.get
--- return $ mileage gs >= targetMileage
---   || money (resources gs) <= 0
---   || food (resources gs) <= 0
---   || health gs == Critical
-
--- | handle event
--- handleEventM :: GameStateM ()
--- handleEventM = do
---   gs <- lift S.get
---   case event gs of
---     Disease -> do
---       newResources <- substractResources (resources gs) Food 10
---       lift $ S.put $ gs {health = Ill, resources = newResources}
---     GoodHarvest -> do
---       newResources <- addResources (resources gs) Food 50
---       lift $ S.put $ gs {resources = newResources}
---     BadWeather -> do
---       newResources <- substractResources (resources gs) Food 20
---       lift $ S.put $ gs {resources = newResources}
---     _ -> return ()
-
 -- | handle user input
 performActionM :: Command -> GameStateM ()
 performActionM command = case command of
@@ -176,6 +157,7 @@ performActionM command = case command of
   Quit -> return () -- quit game
   Status -> return () -- show status
   Travel -> travelActionM
+  Hunt -> huntActionM
   Rest -> restActionM
   Pace -> paceActionM
   Shop -> shopActionM
@@ -211,19 +193,26 @@ paceActionM = lift $ S.modify $ \gs ->
         Fast -> Slow
    in gs {pace = updatedPace}
 
+huntActionM :: GameStateM ()
+huntActionM = do
+  gs <- lift S.get
+  let gainFood = 30
+  resourcesAfterAddingFood <- addResources (resources gs) Food gainFood
+  lift $ S.put $ gs {resources = resourcesAfterAddingFood}
+
 -- | return travel distance
 travelDistance :: Pace -> Nat
 travelDistance Slow = 95 -- slow travel, for example 95  miles each time
 travelDistance Fast = 145 -- fast travel, for example 145 miles each time
 
+-- UPDATE
+nextDate :: GameState -> GameState
+nextDate gs = updateMileage gs {date = date gs + 14}
+
 updateMileage :: GameState -> GameState
 updateMileage gs = case pace gs of
   Slow -> gs {mileage = mileage gs + 7}
   Fast -> gs {mileage = mileage gs + 14}
-
--- UPDATE
-update :: GameState -> GameState
-update gs = updateMileage gs {date = date gs + 1}
 
 update' :: GameState -> ((), GameState)
 update' = undefined
@@ -308,13 +297,8 @@ testUpdateResources = TestCase $ do
 -- res5 = substractResources res10 Food 5
 
 -- >>> res10
--- No instance for (Show1 (State GameState))
---   arising from a use of `evalPrint'
--- In a stmt of an interactive GHCi command: evalPrint it_a30Hm
+
 -- >>> res5
--- No instance for (Show1 (State GameState))
---   arising from a use of `evalPrint'
--- In a stmt of an interactive GHCi command: evalPrint it_a30Mr
 
 tests :: Test
 tests =
@@ -344,59 +328,7 @@ tests =
 runTest :: IO ()
 runTest = runTestTT tests >>= print
 
--- resource
-newtype Resource s = R {currency :: Nat}
-
-manager :: Resource s -> Nat
-manager = currency
-
--- >>> manager (GS 100)
--- 100
-
-initialResource :: Resource s
-initialResource = R {currency = 100}
-
-addResource :: Resource s -> Nat -> Resource s
-addResource r n = r {currency = currency r + n}
-
-substractResource :: Resource s -> Nat -> Resource s
-substractResource r n =
-  if n > currency r
-    then error "Insufficient funds"
-    else r {currency = currency r - n}
-
-data ResourceType = Food | Clothes | Money deriving (Eq, Ord)
-
-instance Show ResourceType where
-  show Food = "food"
-  show Clothes = "clothes"
-  show Money = "money"
-
-type ResourcesM = Map ResourceType Nat
-
-data Resources s = Resources
-  { food :: Nat,
-    clothes :: Nat,
-    money :: Nat
-  }
-  deriving (Eq, Ord, Show)
-
--- data.Map ResourceType -> Nat
--- get
--- simplify, not case
-
-zeroResources :: Resources s
-zeroResources = Resources {food = 0, clothes = 0, money = 0}
-
-initialResources :: Resources s
-initialResources = Resources {food = 0, clothes = 0, money = 700}
-
-initialResources2 :: Resources s
-initialResources2 = Resources {food = 10, clothes = 0, money = 800}
-
--- make functions to change the state generic
--- pass in which resource we would like to change
-
+-- Resource Functions
 addResources :: Resources s -> ResourceType -> Nat -> ExceptT String (S.State GameState) (Resources s)
 addResources r rt n = return $ -- assume a permanent success
   case rt of
@@ -404,18 +336,6 @@ addResources r rt n = return $ -- assume a permanent success
     Clothes -> r {clothes = clothes r + n}
     Money -> r {money = money r + n}
 
--- return Left
--- substractResources :: Resources s -> ResourceType -> Nat -> Resources s
--- substractResources r rtype n = case rtype of
---   Food -> case food r `minus` n of
---     Just n' -> r {food = n'}
---     Nothing -> error "Insufficient food"
---   Clothes -> case clothes r `minus` n of
---     Just n' -> r {clothes = n'}
---     Nothing -> error "Insufficient clothes"
---   Money -> case money r `minus` n of
---     Just n' -> r {money = n'}
---     Nothing -> error "Insufficient funds"
 substractResources :: Resources s -> ResourceType -> Nat -> ExceptT String (S.State GameState) (Resources s)
 substractResources r rtype n = case rtype of
   Food -> case food r `minus` n of
@@ -427,24 +347,3 @@ substractResources r rtype n = case rtype of
   Money -> case money r `minus` n of
     Just n' -> return $ r {money = n'}
     Nothing -> throwError "Insufficient funds"
-
-addMoney :: Resources s -> Nat -> Resources s
-addMoney r n = r {money = money r + n}
-
-substractMoney :: Resources s -> Nat -> Resources s
-substractMoney r n =
-  if n > money r
-    then error "Insufficient funds"
-    else r {money = money r - n}
-
-getResourceAmount :: Resources s -> ResourceType -> Nat
-getResourceAmount r rtype = case rtype of
-  Food -> food r
-  Clothes -> clothes r
-  Money -> money r
-
--- | utility for substraction
-minus :: Nat -> Nat -> Maybe Nat
-minus a b = if sub >= 0 then Just (fromIntegral sub) else Nothing
-  where
-    sub = fromIntegral a - fromIntegral b :: Int

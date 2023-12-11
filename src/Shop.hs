@@ -16,7 +16,7 @@ itemToString s = case s of
 
 -- shopping :: ShopType -> Int -> IO ()
 -- shopping cat wallet = do
---   putStrLn (shopping cat)
+--   putStrLn (spend cat)
 --   input <- getLine
 --   case parseInt input of
 --     Just x -> if x > 0 && x < wallet then

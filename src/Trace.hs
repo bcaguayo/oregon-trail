@@ -120,3 +120,4 @@ testTraceEcho2 =
 
 -- >>> runTestTT testTraceEcho2
 -- Counts {cases = 1, tried = 1, errors = 0, failures = 1}
+

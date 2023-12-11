@@ -2,39 +2,66 @@ module Locations where
 
 import Data.Type.Nat
 import Text as T
+import Options
 
 -- LOCATIONS
-{-
-Hits:
-Independence, Missouri  0 miles
-Missouri River          10 miles
-Fort Kearney            325 miles
-Fort Laramie            600 miles
-Fort Bridger            975 miles
-Fort Boise              1500 miles
-The Dalles              1780 miles
-Oregon City, Oregon     2000 miles
--}
 
-data LocationType = Town | River | Fort | Road deriving (Eq, Ord, Show)
+data LocationType = Town  | River | Fort | Road deriving (Eq, Ord, Show)
+
+data Location = 
+    Independence 
+  | MissouriRiver 
+  | FortKearney
+  | FortLaramie
+  | FortBridger
+  | FortBoise
+  | TheDalles
+  | OregonCity
+  | Roadside
+  deriving (Eq, Ord, Show)
 
 -- can only hunt on the Road
 -- can travel always
 -- can only rest in a Town and Fort
 
-getOptions :: LocationType -> [String]
-getOptions = undefined
+getOptions :: LocationType -> [Command]
+getOptions Road = [Help, Status, Pace, Travel, Hunt, Quit]
+getOptions Town = [Help, Status, Travel, Rest, Shop, Quit]
+getOptions Fort = [Help, Status, Travel, Rest, Quit]
+getOptions River = [Help, Status, Travel, Quit]
 
-locations :: [String]
-locations = [ "Independence, Missouri"
-            , "Missouri River"
-            , "Fort Kearney"
-            , "Fort Laramie"
-            , "Fort Bridger"
-            , "Fort Boise"
-            , "The Dalles"
-            , "Oregon City, Oregon"
-            ]
+-- locationsToOptions :: String -> [Command]
+
+printLocation :: Location -> String
+printLocation Independence = "Independence, Missouri"
+printLocation MissouriRiver = "Missouri River"
+printLocation FortKearney = "Fort Kearney"
+printLocation FortLaramie = "Fort Laramie"
+printLocation FortBridger = "Fort Bridger"
+printLocation FortBoise = "Fort Boise"
+printLocation TheDalles = "The Dalles"
+printLocation OregonCity = "Oregon City, Oregon"
+printLocation Roadside = "The Road"
+
+getLocation :: Nat -> String
+getLocation n
+  | n >= 0 && n < 10 = "Independence, Missouri"
+  | n >= 10 && n < 325 = "Missouri River"
+  | n >= 325 && n < 600 = "Fort Kearney"
+  | n >= 600 && n < 975 = "Fort Laramie"
+  | n >= 975 && n < 1500 = "Fort Bridger"
+  | n >= 1500 && n < 1800 = "Fort Boise"
+  | n >= 1880 = "The Dalles"
+  | otherwise = error "Invalid location"
+
+initialLocationMap :: [(Location, Bool)]
+initialLocationMap = [(Independence, False), (MissouriRiver, False), 
+  (FortKearney, False), (FortLaramie, False), (FortBridger, False), 
+  (FortBoise, False), (TheDalles, False), (OregonCity, False)]
+
+checkLocation :: [(Location, Bool)] -> Location
+checkLocation [] = Roadside
+checkLocation ((loc, visited):rest) = if visited then checkLocation rest else loc
 
 -- DATES
 {-
@@ -44,8 +71,8 @@ May starts 1st (35) and ends 31st (65)
 June starts 1st (66) and ends 30th (96)
 July starts 1st (97) and ends 31st (127)
 August starts 1st (128) and ends 31st (158)
-September starts 1st (159) and ends 30th (189)
-October starts 1st (190) and ends 31st (220)
+September ^starts 1st (159) and ends 30th (189)
+October star^ts 1st (190) and ends 31st (220)
 November starts 1st (221) and ends 30th (251)
 December starts 1st (252) and ends 20th (266)
 -}
@@ -83,6 +110,8 @@ numtoDate (month, day) = case month of
 
 getDate :: Int -> String
 getDate i = T.dates !! i
+
+
 
 {-
 WIP, move Dates code to Events.hs or smth
@@ -123,6 +152,24 @@ so 20 * pace < 2000,
 pace < 100 miles per step
 lets do 95 miles for slow
 
+Multiples of 145 until 2040
+145, 290, 435, 580, 725, 870, 1015, 1160, 1305, 1450, 1595, 1740, 1885, 2030
+
+Multiples of 95 until 2040
+95, 190, 285, 380, 475, 570, 665, 760, 855, 950, 1045, 1140, 1235, 1330, 1425, 1520, 1615, 1710, 1805, 1900, 1995
+
+-}
+
+{-
+Hits:
+Independence, Missouri  0 miles
+Missouri River          10 miles
+Fort Kearney            325 miles
+Fort Laramie            600 miles
+Fort Bridger            975 miles
+Fort Boise              1500 miles
+The Dalles              1780 miles
+Oregon City, Oregon     2000 miles
 -}
 
 {-
