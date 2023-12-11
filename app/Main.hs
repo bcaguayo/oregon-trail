@@ -4,7 +4,7 @@ import GameState
     ( GameState(resources, date, mileage, pace, health),
       Pace(Fast, Slow),
       initialGameState,
-      performActionM )
+      performActionM, nextDate )
 import Options
 import GHC.Base (undefined)
 -- import Control.Monad.RWS (MonadState(put))
@@ -100,13 +100,13 @@ handleInput input gs =
       case newGameState of
         (Left errMsg, _) -> output errMsg >> update gs
         (Right _, updatedGameState) ->
-          output "Hunting... \n" >> update (newDate updatedGameState)
+          output "Hunting... \n" >> update (nextDate updatedGameState)
     Just Rest -> do
       let newGameState = S.runState (runExceptT (performActionM Rest)) gs
       case newGameState of
         (Left errMsg, _) -> output errMsg >> update gs
         (Right _, updatedGameState) ->
-          output "Resting... \n" >> update (newDate updatedGameState)
+          output "Resting... \n" >> update (nextDate updatedGameState)
     Just Pace -> do
       let newGameState = S.runState (runExceptT (performActionM Pace)) gs
       case newGameState of
@@ -135,7 +135,7 @@ printGameState gs = do
   output ("Resources: " ++ show (resources gs))
   output "___________________________"
 
-doEvent :: IO ()
-doEvent = do
-  gen <- newStdGen
-  if random gen then output "You found a river" else output "You found a town"
+-- doEvent :: IO ()
+-- doEvent = do
+--   gen <- newStdGen
+--   if random gen then output "You found a river" else output "You found a town"
