@@ -65,7 +65,7 @@ paceSlow = 95
 instance Show GameState where
   show gs =
     "Status: { Date: "
-      ++ natToDate (date gs)
+      ++ natToDate (fromIntegral (date gs))
       ++ ", Mileage: "
       ++ show (mileage gs)
       ++ ", Pace: "

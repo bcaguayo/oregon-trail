@@ -16,6 +16,9 @@ version = "This Haskell implementation presents a rendition of\n" ++
         "Based on the version published in the July-August 1978\n" ++
         "issue of Creative Computing magazine.\n\n" ++
 
+        "This version also takes reference from the Python 3.7 port\n" ++
+        "made by philjonas on GitHub.\n\n" ++
+
         "PROGRAM NAME - 0REGON      VERSION:01/01/78\n" ++
         "ORIGINAL PROGRAMMING BY BILL HEINEMANN - 1971\n" ++
         "SUPPORT RESEARCH AND MATERIALS BY DON RAVITSCH\n" ++
@@ -52,17 +55,11 @@ endSlow :: String
 endSlow = "You have been on the trail for too long. \n" ++
           "Your family dies in the first blizzard of winter \nGame Over\n"
 
-dates :: [String]
-dates = ["March 29", "April 12", "April 26", "May 10", "May 24", "June 7",
-        "June 21", "July 5", "July 19", "August 2", "August 16", "August 30", 
-        "September 13", "September 27", "October 11", "October 25", "November 8", 
-        "November 22", "December 6", "December 20"]
+instructionsQ :: String
+instructionsQ =  "DO YOU NEED INSTRUCTIONS? (yes/no) \n"
 
-instructions1 :: String
-instructions1 =  "Do you need instructions (yes/no): \n"
-
-instructions2 :: String
-instructions2 = "THIS PROGRAM SIMULATES A TRIP OVER THE OREGON TRAIL FROM\n" ++
+instructionsA :: String
+instructionsA = "THIS PROGRAM SIMULATES A TRIP OVER THE OREGON TRAIL FROM\n" ++
         "  INDEPENDENCE, MISSOURI TO OREGON CITY, OREGON IN 1847.\n" ++
         "  YOUR FAMILY OF FIVE WILL COVER THE 2040 MILE OREGON TRAIL\n" ++
         "  IN 5-6 MONTHS --- IF YOU MAKE IT ALIVE.\n\n" ++
@@ -105,3 +102,21 @@ instructions2 = "THIS PROGRAM SIMULATES A TRIP OVER THE OREGON TRAIL FROM\n" ++
         "  EXCEPT BULLETS.\n" ++
         "  WHEN ASKED TO ENTER MONEY AMOUNTS, DON'T USE A \"$\".\n" ++
         "  GOOD LUCK!!!"
+
+-- _______________________________ LOCATIONS _______________________________
+
+dates :: [String]
+dates = ["MARCH 29", "APRIL 12", "APRIL 26", "MAY 10", "MAY 24", "JUNE 7",
+        "JUNE 21", "JULY 5", "JULY 19", "AUGUST 2", "AUGUST 16", "AUGUST 31", 
+        "SEPTEMBER 13", "SEPTEMBER 27", "OCTOBER 11", "OCTOBER 25", "NOVEMBER 8", 
+        "NOVEMBER 22", "DECEMBER 6", "DECEMBER 20"]
+
+weekdays :: [String]
+weekdays = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY",
+         "SATURDAY", "SUNDAY"]
+
+professions :: String
+professions = "What is your profession? \n" ++
+             "1. Banker \n" ++
+             "2. Carpenter \n" ++
+             "3. Farmer \n"

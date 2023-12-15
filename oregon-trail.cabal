@@ -33,6 +33,7 @@ common common-stanza
     , directory
     , random
     , mtl
+    , time
   default-language:
     GHC2021
   default-extensions:

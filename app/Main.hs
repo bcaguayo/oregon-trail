@@ -51,17 +51,17 @@ username = do
   output ("Hello, " ++ name ++ "!")
 
 profession :: IO ()
-profession = undefined
-
-marksmanship :: IO ()
-marksmanship = undefined
+profession = do
+  output professions
+  professions <- inputb
+  output ("You have chosen: " ++ marksmanship ++ "!")
 
 instructions :: IO ()
 instructions = do
-  output T.instructions1
+  output T.instructionsQ
   input <- inputb
   case input of
-    "yes" -> output T.instructions2
+    "yes" -> output T.instructionsA
     "no" -> output "Good luck! \n"
     _ -> output "Invalid command, try again" >> instructions
 
