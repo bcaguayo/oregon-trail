@@ -43,4 +43,11 @@ parseInt input = case map toLower input of
     "7" -> Just Quit
     _ -> Nothing
 
+data Profession = Banker | Carpenter | Farmer deriving (Eq, Show)
 
+parseProfession :: String -> Maybe Profession
+parseProfession input = case map toLower input of
+    "banker" -> Just Banker
+    "carpenter" -> Just Carpenter
+    "farmer" -> Just Farmer
+    _ -> Nothing

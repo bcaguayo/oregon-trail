@@ -49,3 +49,8 @@ getResourceAmount r rtype = case rtype of
 minus :: Nat -> Nat -> Maybe Nat
 minus a b = if sub >= 0 then Just (fromIntegral sub) else Nothing
     where sub = fromIntegral a - fromIntegral b :: Int
+
+natToRes :: Nat -> ResourceType
+natToRes 0 = Food
+natToRes 1 = Clothes
+natToRes _ = Money

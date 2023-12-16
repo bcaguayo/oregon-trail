@@ -1,25 +1,17 @@
 module Main where
 
 import GameState
-    ( GameState(resources, date, mileage, pace, health),
-      Pace(Fast, Slow),
-      initialGameState,
-      performActionM, nextDate )
 import Options
 import GHC.Base (undefined)
--- import Control.Monad.RWS (MonadState(put))
-
 import Control.Monad.Cont (MonadIO (liftIO))
 import Control.Monad.Except
-import GHC.Base (undefined)
-import GameState
 -- | This module imports the 'State' module and qualifies it with the alias 'S'.
 import qualified State as S
 import StateMonad
-import Control.Monad.Cont (MonadIO(liftIO))
 import qualified Text as T
 import Trace
 import Locations (getLocation)
+import GameState (shopActionM')
 
 {-
 Basic Functionality:
@@ -39,45 +31,31 @@ main = play
 play :: IO ()
 play = do
   output T.version
-  username -- output "Enter your name: " >>= inputb >>= output . ("Hello, " ++) >> output "!"
+  -- Get User Name
+  output "Enter your name: " >> inputb >>= output . ("Hello, " ++) >> output "!"
+  -- Display Instructions
   output T.introShort
-  instructions
-  update initialGameState
-
-username :: IO ()
-username = do
-  output "Enter your name: "
-  name <- inputb
-  output ("Hello, " ++ name ++ "!")
-
-profession :: IO ()
-profession = do
-  output professions
-  professions <- inputb
-  output ("You have chosen: " ++ marksmanship ++ "!")
-
-instructions :: IO ()
-instructions = do
   output T.instructionsQ
   input <- inputb
   case input of
     "yes" -> output T.instructionsA
     "no" -> output "Good luck! \n"
-    _ -> output "Invalid command, try again" >> instructions
+    _ -> output "Invalid command, try again" >> play
+  -- Choose your Profession
+  output T.professions >> inputb >>= output . ("You have chosen: " ++)
+  -- Play Game
+  update initialGameState
 
 -- | This Game Loop is Cassia Approved
 update :: GameState -> IO ()
 update gs
-  | mileage gs > 2040 = output T.endGood >> quit
-  | date gs > 266 = output T.endSlow >> quit
+  | mileage gs > 2040 = output T.endGood
+  | date gs > 266 = output T.endSlow
   | otherwise = do
-      printLocation gs
+      output (printLocation gs)
       output T.option
       input <- inputb
       handleInput input gs
-
-quit :: IO ()
-quit = output "Bye Bye!"
 
 handleInput :: String -> GameState -> IO ()
 handleInput input gs =
@@ -88,7 +66,7 @@ handleInput input gs =
         (Left errMsg, _) -> output errMsg >> update gs
         (Right _, updatedGameState) ->
           output "Traveling... \n" >> update (nextDate updatedGameState)
-    Just Status -> printGameState gs >> update gs
+    Just Status -> output (printGameState gs) >> update gs
     Just Shop -> do
       let newGameState = S.runState (runExceptT (performActionM Shop)) gs
       case newGameState of
@@ -114,35 +92,56 @@ handleInput input gs =
         (Left errMsg, _) -> output errMsg >> update gs
         (Right _, updatedGameState) ->
           output (if pace updatedGameState == Slow then "Going Slow ...\n" else "Going Fast ...\n") >> update updatedGameState
-    Just Quit -> quit
+    Just Quit -> output "Bye Bye!"
     Nothing -> output "Invalid command, try again \n" >> update gs
 
--- define as string
 
-printLocation :: GameState -> IO ()
-printLocation gs = do
-  output ("________{ " ++ getLocation (mileage gs) ++ " }________\n")
-  output "___________________________\n"
-  -- output ("Location: " ++ "not implemented")
-  output ("Date: " ++ show (date gs))
-  output ("Mileage: " ++ show (mileage gs))
-  output "___________________________"
+printLocation gs = T.printLocation l d m where
+  l = show (getLocation (mileage gs))
+  d = show (date gs)
+  m = show (mileage gs)
 
-printGameState :: GameState -> IO ()
-printGameState gs = do
-  output "___________________________\nGame State:"
-  output ("Date: " ++ show (date gs))
-  output ("Mileage: " ++ show (mileage gs))
-  output ("Pace: " ++ show (pace gs))
-  output ("Health: " ++ show (health gs))
-  output ("Resources: " ++ show (resources gs))
-  output "___________________________"
+printGameState gs = T.printGameState d m p h r where
+  d = show (date gs)
+  m = show (mileage gs)
+  p = show (pace gs)
+  h = show (health gs)
+  r = show (resources gs)
 
-shopping :: GameState -> IO ()
-shopping gs = undefined
+-- shopping :: GameState -> IO ()
+-- shopping gs = do
+--   output "How many pounds of food do you want to buy?"
+--   food <- inputb
+--   if food * 10 > getMoney gs 
+--     then output "You don't have enough money to buy that much food"
+--     else do
+--       output "How many sets of clothes do you want to buy?"
+--       clothes <- inputb
+--       if clothes * 10 > money (resources gs) - food * 10
+--         then output "You don't have enough money to buy that much clothes"
+--         else do
+--           let newResources = addResources (resources gs) Food (food * 10)
+--           let newResources' = addResources newResources Clothes (clothes * 10)
+--           let newGameState = gs {resources = newResources'}
+--           output (printGameState newGameState)
+--           update newGameState
+--   -- if food less than cash, throw error
+--   output "How many sets of clothes do you want to buy?"
+--   clothes <- inputb
+--   -- if clothes less than cash - food, throw error
+--   -- newGameState <- S.runState (runExceptT (performActionM (Shop food clothes))) gs
+--   output (printGameState initialGameState)
 
+-- go over this again
+shopFood :: GameState -> IO ()
+shopFood gs = do
+  output "How many pounds of food do you want to buy?"
+  food <- inputb
+  -- Parse an int from food
+  let parsedFood = read food :: Int
+  if parsedFood * 10 > getMoney gs
+    then output "You don't have enough money to buy that much food" >> shopFood gs
+    else shopClothes gs -- (shopActionM' (Shop food 0) gs)
 
--- doEvent :: IO ()
--- doEvent = do
---   gen <- newStdGen
---   if random gen then output "You found a river" else output "You found a town"
+shopClothes :: GameState -> IO ()
+shopClothes gs = undefined

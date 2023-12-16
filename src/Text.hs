@@ -119,4 +119,34 @@ professions :: String
 professions = "What is your profession? \n" ++
              "1. Banker \n" ++
              "2. Carpenter \n" ++
-             "3. Farmer \n"
+             "3. Farmer \n" ++
+             "4. What do these professions mean? \n"
+
+pDescriptions :: String
+pDescriptions = "1. Banker \n" ++
+                "  You are a banker from Boston. \n" ++
+                "  You have set aside $1200 for your trip to Oregon. \n" ++
+                "  You are not good with a rifle \n" ++
+                "2. Carpenter \n" ++
+                "  You are a carpenter from Ohio. \n" ++
+                "  You have set aside $900 for your trip to Oregon. \n" ++
+                "  You are average with a rifle \n" ++
+                "3. Farmer \n" ++
+                "  You are a farmer from Illinois. \n" ++
+                "  You have set aside $600 for your trip to Oregon. \n" ++
+                "  You are proficient with a rifle \n"
+
+printLocation :: String -> String -> String -> String
+printLocation location date mileage = 
+  "________{ " ++ location ++ " }________\n" ++
+  "___________________________\n" ++
+  "Date: " ++ date ++ "\n" ++ "Mileage: " ++ mileage ++ "\n" ++
+  "___________________________\n"
+
+printGameState :: String -> String -> String -> String -> String -> String
+printGameState date mileage pace health resources = 
+  "___________________________\nGame State:" ++
+  "Date: " ++ date ++ "\n" ++ "Mileage: " ++ mileage ++ "\n" ++
+  "Pace: " ++ pace ++ "\n" ++ "Health: " ++ health ++ "\n" ++
+  "Resources: " ++ resources ++ "\n" ++
+  "___________________________\n"

@@ -186,6 +186,16 @@ shopActionM = do
   updatedResources <- substractResources resourcesAfterAddingFood Money foodCost
   lift $ S.put $ gs {resources = updatedResources}
 
+shopActionM' :: ResourceType -> Bool -> Nat -> ExceptT String GameStateM ()
+shopActionM' res pos amount = undefined
+  -- do
+  -- gs <- lift S.get
+  -- -- First, add food resources
+  -- let updatedResources = if pos
+  --           then addResources (resources gs) res amount
+  --           else substractResources (resources gs) res amount
+  -- lift $ S.put $ gs {resources = updatedResources}
+
 paceActionM :: GameStateM ()
 paceActionM = lift $ S.modify $ \gs ->
   let updatedPace = case pace gs of
@@ -259,3 +269,6 @@ substractResources r rtype n = case rtype of
   Money -> case money r `minus` n of
     Just n' -> return $ r {money = n'}
     Nothing -> throwError "Insufficient funds"
+
+getMoney :: GameState -> Int
+getMoney gs = fromIntegral (money (resources gs))

@@ -12,6 +12,8 @@ itemToString s = case s of
   SFood -> "FOOD"
   SClothes -> "CLOTHES"
 
+-- wip integrate with main
+
 -- shop = Shop.shopping SFood 700
 
 -- shopping :: ShopType -> Int -> IO ()

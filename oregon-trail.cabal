@@ -1,6 +1,6 @@
 cabal-version:  2.2
 name:           oregon-trail
-version:        0.1.0.0
+version:        1.2
 description:    Please see the README on GitHub at <https://github.com/githubuser/oregon-trail#readme>
 homepage:       https://github.com/githubuser/oregon-trail#readme
 bug-reports:    https://github.com/githubuser/oregon-trail/issues
@@ -82,5 +82,10 @@ test-suite oregon-trail-test
   build-depends:
       oregon-trail
   other-modules:
+      EventsT
       GameStateT
-
+      LocationsT
+      OptionsT
+      ResourcesT
+      ShopT
+      TraceT
