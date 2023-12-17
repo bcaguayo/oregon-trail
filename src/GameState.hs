@@ -94,9 +94,10 @@ checkState gs
   | mileage gs >= targetMileage = gsE
   | food (resources gs) <= 0 = gsO
   | health gs == Critical = gsO
-  | otherwise = gs where
-    gsE = gs { status = GameEnd }
-    gsO = gs { status = GameOver }
+  | otherwise = gs
+  where
+    gsE = gs {status = GameEnd}
+    gsO = gs {status = GameOver}
 
 -- | update game state
 updateGameStateM :: GameStateM ()
@@ -160,7 +161,7 @@ performActionM command = case command of
   Hunt -> huntActionM
   Rest -> restActionM
   Pace -> paceActionM
-  Shop -> shopActionM
+  Shop -> shopActionM'
 
 travelActionM :: GameStateM ()
 travelActionM = do
@@ -186,15 +187,34 @@ shopActionM = do
   updatedResources <- substractResources resourcesAfterAddingFood Money foodCost
   lift $ S.put $ gs {resources = updatedResources}
 
-shopActionM' :: ResourceType -> Bool -> Nat -> ExceptT String GameStateM ()
-shopActionM' res pos amount = undefined
-  -- do
-  -- gs <- lift S.get
-  -- -- First, add food resources
-  -- let updatedResources = if pos
-  --           then addResources (resources gs) res amount
-  --           else substractResources (resources gs) res amount
-  -- lift $ S.put $ gs {resources = updatedResources}
+-- shopActionM' :: ResourceType -> Bool -> Nat -> ExceptT String GameStateM ()
+-- shopActionM' res pos amount = undefined
+
+shopActionM' :: ResourceType -> Bool -> Nat -> GameStateM ()
+shopActionM' resourceType isBuying amount = do
+  gs <- lift S.get -- get the current game state
+  let currentResources = resources gs
+
+  -- Update resources based on whether the player is buying or selling
+  let updatedResources =
+        if isBuying
+          then addResources' currentResources resourceType amount
+          else case resourceType of
+            Money -> substractMoney currentResources amount
+            _ -> case minus (getResourceAmount currentResources resourceType) amount of
+              Just n' -> addResources' currentResources resourceType n'
+              Nothing -> error "Insufficient resources"
+
+  -- update game state
+  lift $ S.put $ gs {resources = updatedResources}
+
+-- do
+-- gs <- lift S.get
+-- -- First, add food resources
+-- let updatedResources = if pos
+--           then addResources (resources gs) res amount
+--           else substractResources (resources gs) res amount
+-- lift $ S.put $ gs {resources = updatedResources}
 
 paceActionM :: GameStateM ()
 paceActionM = lift $ S.modify $ \gs ->
@@ -224,8 +244,15 @@ updateMileage gs = case pace gs of
   Slow -> gs {mileage = mileage gs + 7}
   Fast -> gs {mileage = mileage gs + 14}
 
-update' :: GameState -> ((), GameState)
-update' = undefined
+update' :: GameState -> ShopCommand -> ((), GameState)
+update' gs command =
+  case command of
+    Shop resourceType isBuying amount ->
+      let (result, newGs) = runExceptT (shopActionM' resourceType isBuying amount) gs
+       in case result of
+            Left errMsg -> ((), gs) -- handle erroe
+            Right _ -> ((), newGs) -- update game state
+    _ -> ((), gs) -- other command
 
 update'' :: Resources a -> GameState -> (Resources a, GameState)
 update'' = undefined
