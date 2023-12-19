@@ -116,6 +116,7 @@ resourceModifier (m1, m2, m3) rt = case rt of
     Food -> m1
     Clothes -> m2
     Money -> m3
+    _ -> m3
 
 eventString :: Event -> String
 eventString e = case e of

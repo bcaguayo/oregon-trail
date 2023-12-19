@@ -2,9 +2,10 @@ module GameStateT where
 
 import qualified State as S
 import GameState
+import Control.Monad.Except (ExceptT, runExceptT)
 import Resources
 import Test.HUnit
-    ( assertBool, assertEqual, runTestTT, Test(TestList, TestCase) )
+    ( assertBool, assertEqual, runTestTT, Test(TestList, TestCase), assertFailure )
 
 testUpdateGameState :: Test
 testUpdateGameState = TestCase $ do

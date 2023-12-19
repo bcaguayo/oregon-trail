@@ -2,7 +2,8 @@
 module ResourcesT where
 
 import Resources
-import Test.QuickCheck ()
+import Test.QuickCheck
+import Test.QuickCheck.Arbitrary
 
 -- Custom Arbitrary implementation
 instance Arbitrary ResourceType where

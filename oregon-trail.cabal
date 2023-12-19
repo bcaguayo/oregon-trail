@@ -75,7 +75,7 @@ test-suite oregon-trail-test
   type: 
       exitcode-stdio-1.0
   main-is:
-      Testing.hs
+      Main.hs
   hs-source-dirs:
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
