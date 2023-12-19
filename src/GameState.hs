@@ -8,6 +8,7 @@ import Data.Map (Map)
 import Data.Type.Nat (Nat)
 import Locations (natToDate)
 import Options
+import Locations
 import Resources
 import State as S
 import Test.HUnit
@@ -20,6 +21,7 @@ import Test.HUnit
   )
 import Test.QuickCheck ()
 import Text ()
+import Data.Set (Set)
 
 data Pace = Slow | Fast deriving (Show, Eq)
 
@@ -33,7 +35,8 @@ data GameState = GameState
     pace :: Pace,
     health :: HealthStatus,
     resources :: Resources ResourceType,
-    status :: GameStatus
+    status :: GameStatus,
+    visited :: Set Location
   }
   deriving (Eq)
 
@@ -98,6 +101,10 @@ checkState gs
   where
     gsE = gs {status = GameEnd}
     gsO = gs {status = GameOver}
+
+
+visitNewLocation :: GameStateM ()
+visitNewLocation = undefined
 
 -- | update game state
 updateGameStateM :: GameStateM ()

@@ -156,3 +156,7 @@ printGameState date mileage pace health resources =
   "Pace: " ++ pace ++ "\n" ++ "Health: " ++ health ++ "\n" ++
   "Resources: " ++ resources ++ "\n" ++
   "___________________________\n"
+
+shopTiles :: [String]
+shopTiles = ["pounds of food", "sets of clothing", "boxes of bullets", 
+             "wagon wheels", "wagon axles", "wagon tongues"]

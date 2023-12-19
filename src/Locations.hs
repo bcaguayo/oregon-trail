@@ -53,47 +53,22 @@ locationFromRange n
   | n >= 2170 = OregonCity
   | otherwise = Roadside
 
--- arrivedToLocation :: Nat -> Bool
--- arrivedToLocation n = nextLocation initialLocationMap == locationFromRange n 
-
--- initialLocationMap :: [(Location, Bool)]
--- initialLocationMap = [(Independence, False), (MissouriRiver, False), 
---   (FortKearney, False), (FortLaramie, False), (FortBridger, False), 
---   (FortBoise, False), (TheDalles, False), (OregonCity, False)]
-
--- nextLocation :: [(Location, Bool)] -> Location
--- nextLocation [] = Roadside
--- nextLocation ((loc, visited):rest) = if visited then nextLocation rest else loc
-
--- checkLocation :: [(Location, Bool)] -> [(Location, Bool)]
--- checkLocation [] = []
--- checkLocation ((loc, visited):rest) = if visited then (loc, visited) : checkLocation rest else (loc, True) : rest
+initialVisitedSet :: Set Location
+initialVisitedSet = Set.fromList [Independence]
 
 -- | Returns the next location and the updated location map
-getLocation :: Nat -> Set Location -> (Location, Set Location)
+-- getLocation :: Nat -> Set Location -> (Location, Set Location)
+-- getLocation n locs = if locationFromRange n `notElem` locs
+--   then (locationFromRange n, Set.insert (locationFromRange n) locs)
+--   else (Roadside, locs)
+
+getLocation :: Nat -> Set Location -> Location
 getLocation n locs = if locationFromRange n `notElem` locs
-  then (locationFromRange n, Set.insert (locationFromRange n) locs)
-  else (Roadside, locs)
+  then locationFromRange n
+  else Roadside
 
 -- >>> getLocation 0 Set.empty
 -- (Independence, Missouri,fromList [Independence, Missouri])
-
--- Location State
-
-type LocationM = S.State [Location]
-
-initialLocationState :: [Location]
-initialLocationState = [Independence]
-
-getLocationM :: Nat -> LocationM Location
-getLocationM n = do
-  locs <- S.get
-  return $ locs !! fromIntegral n
-
-visitedLocation :: Location -> LocationM Bool
-visitedLocation loc = do
-  locs <- S.get
-  return $ loc `elem` locs
 
 -- DATES
 
