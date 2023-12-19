@@ -204,27 +204,28 @@ shopActionM = do
   updatedResources <- substractResources resourcesAfterAddingFood Money foodCost
   lift $ S.put $ gs {resources = updatedResources}
 
-shopActionM' :: ResourceType -> Nat -> ExceptT String GameStateM ()
-shopActionM' resourceType amount = do
-  gs <- lift S.get -- Get the current game state.
-  let currentResources = resources gs
+shopActionM' :: ResourceType -> Nat -> GameStateM ()
+shopActionM' resourceType amount = undefined
+  -- do
+  -- gs <- lift S.get -- Get the current game state.
+  -- let currentResources = resources gs
 
-  -- Calculate the cost of the transaction.
-  let cost = amount * 5 -- Assuming a unit cost of 5 for all resources.
+  -- -- Calculate the cost of the transaction.
+  -- let cost = amount * 5 -- Assuming a unit cost of 5 for all resources.
 
-  -- Update resources based on whether the player is buying or selling.
-  updatedResources <- do
-        -- If buying, add the purchased resource.
-    let resourcesAfterAddition = addResources' currentResources resourceType amount
+  -- -- Update resources based on whether the player is buying or selling.
+  -- updatedResources <- do
+  --       -- If buying, add the purchased resource.
+  --   let resourcesAfterAddition = addResources' currentResources resourceType amount
 
-    -- Try to subtract the equivalent amount of money.
-    eitherResult <- runExceptT $ substractResources resourcesAfterAddition Money cost
-    case eitherResult of
-      Left errMsg -> throwError errMsg -- Throw error if funds are insufficient.
-      Right newResources -> return newResources
+  --   -- Try to subtract the equivalent amount of money.
+  --   eitherResult <- runExceptT $ substractResources resourcesAfterAddition Money cost
+  --   case eitherResult of
+  --     Left errMsg -> throwError errMsg -- Throw error if funds are insufficient.
+  --     Right newResources -> return newResources
 
-  -- Update the game state with the new resources.
-  lift $ S.put $ gs {resources = updatedResources}
+  -- -- Update the game state with the new resources.
+  -- lift $ S.put $ gs {resources = updatedResources}
 
 paceActionM :: GameStateM ()
 paceActionM = lift $ S.modify $ \gs ->
@@ -331,8 +332,17 @@ wallet gs = fromIntegral (money (resources gs))
 If succesful shopping return new game state
 If not succesful shopping return error message "Not enought money"
 -}
-shopping :: ResourceType -> Nat -> GameState -> ExceptT String GameStateM ()
-shopping res amount = S.runState (runExceptT (shopActionM' res amount))
+shopping :: ResourceType -> Nat -> GameStateM ()
+shopping res amount = undefined
+  -- do
+  -- gs <- lift S.get
+  -- let (result, newGs) = runExceptT (shopActionM' res amount)
+  -- case result of
+  --   Left errMsg -> throwError errMsg
+  --   Right _ -> lift (S.put newGs)
+
+shop :: GameState -> ResourceType -> Nat -> GameState
+shop = undefined
 
 -- | Event Functions
 applyModifier :: Resources s -> Modifier -> ExceptT String (S.State GameState.GameState) (Resources s)

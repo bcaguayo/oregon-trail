@@ -8,14 +8,11 @@ import Control.Monad.Except
 -- | This module imports the 'State' module and qualifies it with the alias 'S'.
 import qualified State as S
 import StateMonad
-import qualified Text as T
 import Trace
 import Locations
-import GameState (shopActionM')
 import qualified Text as T
 import Resources (ResourceType(Food))
-import Text (notEnough)
-
+import Data.Type.Nat
 
 {-
 Basic Functionality:
@@ -88,7 +85,7 @@ handleInput input gs =
           output "Traveling... \n" >> update (nextDate updatedGameState)
     Just Status -> output (printGameState gs) >> update gs
     Just Shop -> do
-      let newGameState = S.runState (runExceptT (shopActionM' Food True 10)) gs
+      let newGameState = S.runState (runExceptT (shopActionM' Food 10)) gs
       case newGameState of
         (Left errMsg, _) -> output errMsg >> update gs
         (Right _, updatedGameState) ->
@@ -157,11 +154,12 @@ shopFood gs = do
   output "How many pounds of food do you want to buy?"
   food <- inputb
   -- Parse an int from food
-  let parsedFood = read food :: Int
-  if parsedFood * 10 > wallet gs
-    then output notEnough >> shopFood gs
-    else 
-      shopClothes gs -- (shopActionM' (Shop food 0) gs) 
+  let readInt = read food :: Int
+  let natFood = fromIntegral readInt :: Nat
+  let shoppingResult =  S.runState (runExceptT (shopActionM' Food natFood)) gs
+  case shoppingResult of
+    (Left errMsg, _) -> output errMsg >> shopFood gs
+    (Right _, updatedGameState) -> output "You have bought some food \n" >> shopClothes updatedGameState
 
 shopClothes :: GameState -> IO ()
 shopClothes gs = undefined
