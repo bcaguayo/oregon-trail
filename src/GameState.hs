@@ -338,14 +338,10 @@ shopping res amount = S.runState (runExceptT (shopActionM' res amount))
 applyModifier :: Resources s -> Modifier -> ExceptT String (S.State GameState.GameState) (Resources s)
 applyModifier r (M (rt, b, n)) = if b then addResources r rt n else substractResources r rt n
 
--- applyModifiers :: Resources s -> Set Modifier -> ExceptT String (S.State GameState.GameState) (Resources s)
-applyModifiers :: Resources s -> Set Modifier -> ExceptT String (S.State GameState) (Resources s)
-applyModifiers = foldM applyModifier
+applyOutcome :: Resources s -> Outcome -> ExceptT String (S.State GameState) (Resources s)
+applyOutcome r (O (_, ms)) = foldM applyModifier r ms
 
-applyOutcome :: Resources s -> Outcome -> Resources s
-applyOutcome r (O (_, ms)) = applyModifiers r ms
-
-applyEvent :: Nat -> Event -> Resources s -> Resources s
+applyEvent :: Nat -> Event -> Resources s -> ExceptT String (S.State GameState) (Resources s)
 applyEvent option event res = case event of
   E (_, outcomeList) -> applyOutcome res outcome where
     outcome = outcomeList !! fromIntegral option
