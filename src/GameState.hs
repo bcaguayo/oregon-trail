@@ -192,20 +192,31 @@ shopActionM = do
 
 shopActionM' :: ResourceType -> Bool -> Nat -> GameStateM ()
 shopActionM' resourceType isBuying amount = do
-  gs <- lift S.get -- get the current game state
+  gs <- lift S.get -- Get the current game state.
   let currentResources = resources gs
 
-  -- Update resources based on whether the player is buying or selling
-  let updatedResources =
-        if isBuying
-          then addResources' currentResources resourceType amount
-          else case resourceType of
-            Money -> substractMoney currentResources amount
-            _ -> case minus (getResourceAmount currentResources resourceType) amount of
-              Just n' -> addResources' currentResources resourceType n'
-              Nothing -> error "Insufficient resources"
+  -- Calculate the cost of the transaction.
+  let cost = amount * 5 -- Assuming a unit cost of 5 for all resources.
 
-  -- update game state
+  -- Update resources based on whether the player is buying or selling.
+  updatedResources <-
+    if isBuying
+      then do
+        -- If buying, add the purchased resource.
+        let resourcesAfterAddition = addResources' currentResources resourceType amount
+
+        -- Try to subtract the equivalent amount of money.
+        eitherResult <- runExceptT $ substractResources resourcesAfterAddition Money cost
+        case eitherResult of
+          Left errMsg -> throwError errMsg -- Throw error if funds are insufficient.
+          Right newResources -> return newResources
+      else do
+        -- Logic for selling resources.
+        case minus (getResourceAmount currentResources resourceType) amount of
+          Just n' -> return $ addResources' currentResources resourceType n'
+          Nothing -> throwError "Insufficient resources" -- Throw error if resources are insufficient.
+
+  -- Update the game state with the new resources.
   lift $ S.put $ gs {resources = updatedResources}
 
 -- do

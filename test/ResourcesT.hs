@@ -81,9 +81,10 @@ prop_natToRes (NonNegative n) =
         Wheels -> natN == 5
         Money -> natN > 5
 
+-- Test the addition of money
 prop_subtractResources :: NonNegative Integer -> NonNegative Integer -> Property
 prop_subtractResources (NonNegative m) (NonNegative n) =
-  m >= n ==>
+  m > n ==>
     let natM = fromInteger m
         natN = fromInteger n
         res = addMoney zeroResources natM
@@ -98,3 +99,4 @@ runTests = do
   quickCheck prop_minus
   quickCheck prop_resourcesEquality
   quickCheck prop_resourcesInequality
+  quickCheck prop_subtractResources
