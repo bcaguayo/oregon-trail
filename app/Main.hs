@@ -10,8 +10,11 @@ import qualified State as S
 import StateMonad
 import qualified Text as T
 import Trace
-import Locations (getLocation)
+import Locations
 import GameState (shopActionM')
+import qualified Text as T
+import Resources (ResourceType(Food))
+
 
 {-
 Basic Functionality:
@@ -49,6 +52,7 @@ play = do
 -- | This Game Loop is Cassia Approved
 update :: GameState -> IO ()
 update gs
+  -- | arrivedToLocation (mileage gs) = update' gs
   | mileage gs > 2040 = output T.endGood
   | date gs > 266 = output T.endSlow
   | otherwise = do
@@ -56,6 +60,21 @@ update gs
       output T.option
       input <- inputb
       handleInput input gs
+
+update' :: GameState -> IO ()
+update' gs = do
+  output ("You are in: " ++ show (locationFromRange (mileage gs)))
+  output T.townOptions
+  input <- inputb
+  case parseTownCommand input of
+    Just Travel -> do
+      let newGameState = S.runState (runExceptT (performActionM Travel)) gs
+      case newGameState of
+        (Left errMsg, _) -> output errMsg >> update gs
+        (Right _, updatedGameState) -> output "Traveling... \n" >> update updatedGameState
+    Just Status -> output (printGameState gs) >> update' gs
+    Just Quit -> output "Bye Bye!"
+    _ -> output "Invalid command, try again \n" >> update' gs
 
 handleInput :: String -> GameState -> IO ()
 handleInput input gs =
@@ -68,7 +87,7 @@ handleInput input gs =
           output "Traveling... \n" >> update (nextDate updatedGameState)
     Just Status -> output (printGameState gs) >> update gs
     Just Shop -> do
-      let newGameState = S.runState (runExceptT (performActionM Shop)) gs
+      let newGameState = S.runState (runExceptT (shopActionM' Food True 10)) gs
       case newGameState of
         (Left errMsg, _) -> output errMsg >> update gs
         (Right _, updatedGameState) ->
@@ -95,9 +114,8 @@ handleInput input gs =
     Just Quit -> output "Bye Bye!"
     Nothing -> output "Invalid command, try again \n" >> update gs
 
-
 printLocation gs = T.printLocation l d m where
-  l = show (getLocation (mileage gs))
+  l = show (locationFromRange (mileage gs))
   d = show (date gs)
   m = show (mileage gs)
 

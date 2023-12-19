@@ -161,7 +161,7 @@ performActionM command = case command of
   Hunt -> huntActionM
   Rest -> restActionM
   Pace -> paceActionM
-  Shop -> shopActionM'
+  Shop -> return ()
 
 travelActionM :: GameStateM ()
 travelActionM = do
@@ -244,18 +244,18 @@ updateMileage gs = case pace gs of
   Slow -> gs {mileage = mileage gs + 7}
   Fast -> gs {mileage = mileage gs + 14}
 
-update' :: GameState -> ShopCommand -> ((), GameState)
-update' gs command =
-  case command of
-    Shop resourceType isBuying amount ->
-      let (result, newGs) = runExceptT (shopActionM' resourceType isBuying amount) gs
-       in case result of
-            Left errMsg -> ((), gs) -- handle erroe
-            Right _ -> ((), newGs) -- update game state
-    _ -> ((), gs) -- other command
+-- update' :: GameState -> ShopCommand -> ((), GameState)
+-- update' gs command =
+--   case command of
+--     Shop resourceType isBuying amount ->
+--       let (result, newGs) = runExceptT (shopActionM' resourceType isBuying amount) gs
+--        in case result of
+--             Left errMsg -> ((), gs) -- handle erroe
+--             Right _ -> ((), newGs) -- update game state
+--     _ -> ((), gs) -- other command
 
-update'' :: Resources a -> GameState -> (Resources a, GameState)
-update'' = undefined
+-- update'' :: Resources a -> GameState -> (Resources a, GameState)
+-- update'' = undefined
 
 -- res10 = addResources initialResources Food 10
 

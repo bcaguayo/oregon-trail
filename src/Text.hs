@@ -42,6 +42,12 @@ option =  "You may: \n" ++
           "6. Change the Pace \n" ++
           "7. Quit \n"
 
+townOptions :: String
+townOptions = "You may: \n" ++
+              "1. Continue on trail \n" ++
+              "2. Check supplies \n" ++
+              "3. Quit \n"
+
 help :: String
 help = "To play: Type the number of your chosen command and press enter \n"
 

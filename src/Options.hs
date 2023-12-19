@@ -46,6 +46,13 @@ parseInt input = case map toLower input of
   "7" -> Just Quit
   _ -> Nothing
 
+parseTownCommand :: String -> Maybe Command
+parseTownCommand input = case map toLower input of
+    "1" -> Just Travel
+    "2" -> Just Status
+    "3" -> Just Quit
+    _ -> Nothing
+
 data Profession = Banker | Carpenter | Farmer deriving (Eq, Show)
 
 parseProfession :: String -> Maybe Profession

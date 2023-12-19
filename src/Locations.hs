@@ -5,10 +5,12 @@ import Text as T
 import Options
 import qualified Data.Time.Calendar as Cal
 import Data.Maybe (fromMaybe)
+import Data.Set (Set)
+import qualified Data.Set as Set
+import State as S
 
 -- LOCATIONS
-
-data LocationType = Town | River | Fort | Road deriving (Eq, Ord, Show)
+data LocationType = Town | Road deriving (Eq, Ord, Show)
 
 data Location = 
     Independence 
@@ -23,10 +25,8 @@ data Location =
   deriving (Eq, Ord)
 
 getOptions :: LocationType -> [Command]
-getOptions Road = [Help, Status, Pace, Travel, Hunt, Quit]
+getOptions Road = [Help, Status, Travel, Pace, Hunt, Quit]
 getOptions Town = [Help, Status, Travel, Rest, Shop, Quit]
-getOptions Fort = [Help, Status, Travel, Rest, Quit]
-getOptions River = [Help, Status, Travel, Quit]
 
 -- locationsToOptions :: String -> [Command]
 
@@ -41,36 +41,69 @@ instance Show Location where
   show OregonCity = "Oregon City, Oregon"
   show Roadside = "The Road"
 
-getLocation :: Nat -> String
-getLocation n
-  | n >= 0 && n < 10 = "Independence, Missouri"
-  | n >= 10 && n < 325 = "Missouri River"
-  | n >= 325 && n < 600 = "Fort Kearney"
-  | n >= 600 && n < 975 = "Fort Laramie"
-  | n >= 975 && n < 1500 = "Fort Bridger"
-  | n >= 1500 && n < 1800 = "Fort Boise"
-  | n >= 1880 = "The Dalles"
-  | otherwise = error "Invalid location"
+locationFromRange :: Nat -> Location
+locationFromRange n
+  | n >= 0 && n < 10 = Independence
+  | n >= 10 && n < 325 = MissouriRiver
+  | n >= 325 && n < 600 = FortKearney
+  | n >= 600 && n < 975 = FortLaramie
+  | n >= 975 && n < 1500 = FortBridger
+  | n >= 1500 && n < 1800 = FortBoise
+  | n >= 1880 = TheDalles
+  | n >= 2170 = OregonCity
+  | otherwise = Roadside
 
-initialLocationMap :: [(Location, Bool)]
-initialLocationMap = [(Independence, False), (MissouriRiver, False), 
-  (FortKearney, False), (FortLaramie, False), (FortBridger, False), 
-  (FortBoise, False), (TheDalles, False), (OregonCity, False)]
+-- arrivedToLocation :: Nat -> Bool
+-- arrivedToLocation n = nextLocation initialLocationMap == locationFromRange n 
 
-checkLocation :: [(Location, Bool)] -> Location
-checkLocation [] = Roadside
-checkLocation ((loc, visited):rest) = if visited then checkLocation rest else loc
+-- initialLocationMap :: [(Location, Bool)]
+-- initialLocationMap = [(Independence, False), (MissouriRiver, False), 
+--   (FortKearney, False), (FortLaramie, False), (FortBridger, False), 
+--   (FortBoise, False), (TheDalles, False), (OregonCity, False)]
+
+-- nextLocation :: [(Location, Bool)] -> Location
+-- nextLocation [] = Roadside
+-- nextLocation ((loc, visited):rest) = if visited then nextLocation rest else loc
+
+-- checkLocation :: [(Location, Bool)] -> [(Location, Bool)]
+-- checkLocation [] = []
+-- checkLocation ((loc, visited):rest) = if visited then (loc, visited) : checkLocation rest else (loc, True) : rest
+
+-- | Returns the next location and the updated location map
+getLocation :: Nat -> Set Location -> (Location, Set Location)
+getLocation n locs = if locationFromRange n `notElem` locs
+  then (locationFromRange n, Set.insert (locationFromRange n) locs)
+  else (Roadside, locs)
+
+-- >>> getLocation 0 Set.empty
+-- (Independence, Missouri,fromList [Independence, Missouri])
+
+-- Location State
+
+type LocationM = S.State [Location]
+
+initialLocationState :: [Location]
+initialLocationState = [Independence]
+
+getLocationM :: Nat -> LocationM Location
+getLocationM n = do
+  locs <- S.get
+  return $ locs !! fromIntegral n
+
+visitedLocation :: Location -> LocationM Bool
+visitedLocation loc = do
+  locs <- S.get
+  return $ loc `elem` locs
 
 -- DATES
 
 showDate :: Int -> String
-showDate i = line ++ weekday ++ " " ++ day ++ line where
+showDate i = line ++ weekday ++ " " ++ day ++ "\n" ++ line where
   line = "==================================================\n"
   weekday = weekdays !! fromIntegral (weekdayOffset i)
   day = natToDate i
 
 -- >>> showDate 266
--- negate @Nat
 
 natToDate :: Int -> String
 natToDate =  dateToStr . natToTouple
