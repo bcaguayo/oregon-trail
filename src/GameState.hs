@@ -5,9 +5,11 @@ module GameState where
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Map (Map)
+import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Type.Nat (Nat)
+import Events (Event (E), Modifier (M), Outcome (O))
 import Locations
 import Options
 import Resources
@@ -89,7 +91,8 @@ initialGameState =
       health = Healthy,
       resources = initialResources,
       status = Playing,
-      visitedSet = initialVisitedSet
+      visitedSet = initialVisitedSet,
+      visited = initialVisitedSet
     }
 
 checkState :: GameState -> GameState
@@ -344,5 +347,41 @@ substractResources r rtype n = case rtype of
     Just n' -> return $ r {wheels = n'}
     Nothing -> throwError "Insufficient wheels"
 
-getMoney :: GameState -> Int
-getMoney gs = fromIntegral (money (resources gs))
+wallet :: GameState -> Int
+wallet gs = fromIntegral (money (resources gs))
+
+-- | Shop Functions
+
+{-
+If succesful shopping return new game state
+If not succesful shopping return error message "Not enought money"
+-}
+shopping :: ResourceType -> Nat -> GameStateM ()
+shopping res amount = undefined
+
+-- do
+-- gs <- lift S.get
+-- let (result, newGs) = runExceptT (shopActionM' res amount)
+-- case result of
+--   Left errMsg -> throwError errMsg
+--   Right _ -> lift (S.put newGs)
+
+shop :: GameState -> ResourceType -> Nat -> GameState
+shop = undefined
+
+-- | Event Functions
+applyModifier :: Resources s -> Modifier -> ExceptT String (S.State GameState.GameState) (Resources s)
+applyModifier r (M (rt, b, n)) = if b then addResources r rt n else substractResources r rt n
+
+applyOutcome :: Resources s -> Outcome -> ExceptT String (S.State GameState) (Resources s)
+applyOutcome r (O (_, ms)) = foldM applyModifier r ms
+
+applyEvent :: Nat -> Event -> Resources s -> ExceptT String (S.State GameState) (Resources s)
+applyEvent option event res = case event of
+  E (_, outcomeList) -> applyOutcome res outcome
+    where
+      outcome = outcomeList !! fromIntegral option
+
+-- case Map.lookup option (eventMap event) of
+--   Just (O (_, ms)) -> applyModifiers res ms
+--   Nothing -> res

@@ -1,21 +1,21 @@
 module Events where
 
 import Resources
+    ( ResourceType(Clothes, Money, Food, Oxen, Medicine, Wheels), Resources )
 import Data.Type.Nat
 import Test.HUnit
 import Test.QuickCheck
 import Data.Maybe (fromMaybe)
 import Data.List (intercalate)
-import System.Random ( Random(random, randomR), RandomGen, mkStdGen )
-
--- should I do QC for Events?
--- should I use arbitrary, shrink, gen?
+import System.Random ( random, Random, RandomGen, mkStdGen, randomR )
+import Data.Set as Set (Set, toList, size, fromList)
+import Control.Monad.Except (ExceptT, runExceptT)
 
 -- | A Modifier stores: 
 -- 1. A ResourceType we want to change
 -- 2. A Bool, True if we want to add, False if we want to substract
 -- 3. A Nat, by how much
-newtype Modifier = M { modifier :: (ResourceType, Bool, Nat) } deriving (Eq)
+newtype Modifier = M { modifier :: (ResourceType, Bool, Nat) } deriving (Eq, Ord)
 
 -- | for example:
 keepFood :: Modifier
@@ -27,209 +27,86 @@ keepClothes = M (Clothes, True, 0)
 keepMoney :: Modifier
 keepMoney = M (Money, True, 0)
 
--- applyModifier :: Resources s -> Modifier -> Resources s
--- applyModifier r m = case m of
---     M (rt, b, n) -> if b then addResources r rt n else substractResources r rt n
+genRandomModifier :: RandomGen g => g -> ResourceType -> Bool -> Nat -> Nat -> Modifier
+genRandomModifier gen rt isPos minAmount maxAmount = do
+    let value = fst (randomR (fromIntegral minAmount, fromIntegral maxAmount) gen) :: Int
+    M (rt, isPos, fromIntegral value)
+
+loseFood :: Modifier
+loseFood = genRandomModifier (mkStdGen 42) Food False 5 20
 
 instance Show Modifier where
     show (M (rt, b, n)) = if n == 0 then "" else sign ++ show n ++ " " ++ show rt
         where sign = if b then "+" else "-"
 
--- BEGIN: Modifier tests
--- | A Modifier stores: 
--- 1. A ResourceType we want to change
--- 2. A Bool, True if we want to add, False if we want to subtract
--- 3. A Nat, by how much
+-- | An Outcome stores:
+-- 1. A String to show in the options
+-- 2. A set of modifiers to apply if the option is chosen
 
--- | Property: Adding a positive amount of a resource increases the total amount
--- prop_AddingPositiveIncreasesTotal :: Resources s -> Modifier -> Property
--- prop_AddingPositiveIncreasesTotal r (M (rt, b, n)) =
---     b ==> let updatedResources = applyModifier r (M (rt, True, n))
---           in getResourceAmount updatedResources rt == getResourceAmount r rt + n
+newtype Outcome = O { outcome :: (String, Set Modifier) } deriving (Eq)
 
--- -- | Property: Subtracting a positive amount of a resource decreases the total amount
--- prop_SubtractingPositiveDecreasesTotal :: Resources s -> Modifier -> Property
--- prop_SubtractingPositiveDecreasesTotal r (M (rt, b, n)) =
---     not b ==> let updatedResources = applyModifier r (M (rt, False, n))
---               in getResourceAmount updatedResources rt == fromMaybe 0 (getResourceAmount r rt `minus` n)
+instance Show Outcome where
+    show (O (s, ms)) = if null ms || size ms == 0 then s ++ ": No effect"
+        else s ++ ": " ++ intercalate ", " (map show (toList ms))
 
--- -- | Property: Applying a modifier with zero amount does not change the resource amount
--- prop_ZeroAmountDoesNotChangeResource :: Resources s -> Modifier -> Property
--- prop_ZeroAmountDoesNotChangeResource r (M (rt, _, n)) =
---     n == 0 ==> let updatedResources = applyModifier r (M (rt, True, n))
---                in getResourceAmount updatedResources rt == getResourceAmount r rt
+riverOutcomeGood :: Outcome
+riverOutcomeGood = O ("Look for a Bridge", Set.fromList [keepFood, keepClothes, keepMoney])    
 
--- END: Modifier tests
+riverOutcomeBad :: Outcome
+riverOutcomeBad = O ("Cross the River", fromList [f, c, o]) where
+    f = genRandomModifier (mkStdGen 42) Food False 5 20
+    c = genRandomModifier (mkStdGen 42) Clothes False 5 20
+    o = genRandomModifier (mkStdGen 42) Oxen False 0 1
 
--- | A ResourceSet stores 3 Modifiers, one for each Resource
-type ResourceSet = (Modifier, Modifier, Modifier)
-
-toString :: ResourceSet -> String
-toString (m1, m2, m3) = intercalate ", " $ filter (not . null) [show m1, show m2, show m3]
-
-set0 :: ResourceSet
-set0 = (keepFood, keepClothes, keepMoney)
-
-set1 :: ResourceSet
-set1 = (M (Food, True, 10), keepClothes, keepMoney)
-
-set2 :: ResourceSet
-set2 = (keepFood, M (Clothes, False, 20), keepMoney)
-
-set3 :: ResourceSet
-set3 = (keepFood, keepClothes, M (Money, True, 50))
-
-set5 :: ResourceSet
-set5 = (M (Food, True, 10), M (Clothes, False, 20), M (Money, True, 50))
-
--- >>> toString set0
--- ""
-
--- >>> toString set1
--- "+10 food"
-
--- >>> toString set2
--- "-20 clothes"
-
--- >>> toString set3
--- "+50 money"
-
--- >>> toString set5
--- "+10 food, -20 clothes, +50 money"
+huntingOutcome :: Outcome
+huntingOutcome = O ("Go Hunting", Set.fromList [genRandomModifier (mkStdGen 42) Food True 20 30])
 
 -- Event is composed of:
 -- 1. String describing the event
--- 2. Set of Resources that the event changes
-newtype Event = E { event :: (String, ResourceSet)} deriving (Show, Eq)
+-- 2. A List of Outcomes
+newtype Event = E { event :: (String, [Outcome]) } deriving (Eq)
 
--- for example:
-event1 :: Event
-event1 = E ("You Found A River", riverMod) where
-    riverMod = (keepFood, M (Clothes, False, 20), keepMoney)
+instance Ord Event where
+    compare (E (s1, _)) (E (s2, _)) = compare s1 s2
 
-applyEvent :: Resources s -> Event -> Resources s
-applyEvent r e = case e of
-    E (s, (m1, m2, m3)) -> r -- updateResources r m1 m2 m3
+-- Print each outcome on a new line
+instance Show Event where
+    show (E (s, os)) = s ++ "\n" ++ intercalate "\n" (map show os)
 
-resourceModifier :: ResourceSet -> ResourceType -> Modifier
-resourceModifier (m1, m2, m3) rt = case rt of
-    Food -> m1
-    Clothes -> m2
-    Money -> m3
-    _ -> m3
+-- >>> show eventRiver
 
-eventString :: Event -> String
-eventString e = case e of
-    E (s, _) -> s
+-- | Example:
+eventHunting :: Event
+eventHunting = E ("Hunting", [huntingOutcome])
 
-eventOutcome :: Event -> ResourceSet
-eventOutcome e = case e of
-    E (_, rs) -> rs
-
-eventToString :: Event -> String
-eventToString (E (s, rs)) = case rs of
-    (m1, m2, m3) -> s ++ ": " ++ "+10 food"
-
--- BEGIN: Event tests
-
-eventTests :: Test
-eventTests = TestList
-    [ testEventDescription
-    , testEventOutcome
-    , testEventToString
-    ]
-
--- eventHunting :: Event
--- eventHunting = E ("Hunting", (M (Food, True, 10), keepClothes, keepMoney))
-
-testEventDescription :: Test
-testEventDescription = TestCase $
-    assertEqual "Event description" "Hunting" (eventString eventHunting)
-
-testEventOutcome :: Test
-testEventOutcome = TestCase $
-    let huntingResources = (M (Food, True, 10), keepClothes, keepMoney) in
-    let hunting = applyEvent zeroResources eventHunting in
-    assertEqual "Event Outcome" hunting (applyEvent zeroResources eventHunting)
-
-testEventToString :: Test
-testEventToString = TestCase $
-    assertEqual "Event to string" "Hunting: +10 food" (eventToString eventHunting)
-
-
-
--- END: Event tests
-
--- generateRandomModifiers :: IO ResourceSet
--- generateRandomModifiers = do
---     gen <- newStdGen
---     let (m1, gen1) = generateRandomModifier gen
---         (m2, gen2) = generateRandomModifier gen1
---         (m3, _) = generateRandomModifier gen2
---     return (m1, m2, m3)
-
-
-
--- Generate a random event
--- generateRandomEvent :: String -> Event
--- generateRandomEvent s = E (s, generateRandomModifiers)
-
--- >>> runTestTT eventTests
--- Counts {cases = 3, tried = 3, errors = 0, failures = 0}
+eventRiver :: Event
+eventRiver = E ("You Found A River", riverOutcomes) where
+    riverOutcomes = [riverOutcomeGood, riverOutcomeBad]
 
 eventRaiders :: Event
-eventRaiders = E ("A group of Raiders corner your wagon", riverMod) where
-    gen = mkStdGen 42
-    riverMod = (keepFood, keepClothes, genRandomModifier gen Money 100)
+eventRaiders = E ("A group of Raiders corner your wagon", raidersOutcomes) where
+    modLoseFoodWorse = genRandomModifier (mkStdGen 42) Food False 30 50
+    modLoseFoodBad = genRandomModifier (mkStdGen 42) Food False 10 30
+    modLoseClothes = genRandomModifier (mkStdGen 42) Clothes False 30 50
+    modLoseMoney = genRandomModifier (mkStdGen 42) Money False 10 50
+    raiderOutcomeGood = O ("Fight", fromList [modLoseFoodWorse, modLoseMoney])
+    raiderOutcomeBad = O ("Run", fromList [modLoseFoodBad, modLoseClothes])
+    raidersOutcomes = [raiderOutcomeGood, raiderOutcomeBad]
 
-eventHunting :: Event
-eventHunting = E ("Hunting", (M (Food, True, 10), keepClothes, keepMoney))
+eventSet :: Set Event
+eventSet = Set.fromList [eventHunting, eventRiver, eventRaiders]
 
-generateRandomMoneyModifier :: RandomGen g => g -> Int -> (Modifier, g)
-generateRandomMoneyModifier gen n =
-    let (value, gen') = randomR (0, n) gen
-        (isPositive, gen'') = random gen'
-    in (M (Money, isPositive, fromIntegral value), gen'')
+-- Choose a random event from the set
+genRandomEvent gen = do
+    let (event, gen') = randomR (0, size eventSet) gen
+    fromMaybe (E ("", [])) (lookup event (zip [0..] (toList eventSet)))
 
-genRandomModifier :: RandomGen g => g -> ResourceType -> Int -> Modifier
-genRandomModifier gen res n =
-    let (value, gen') = randomR (0, n) gen
-        (isPositive, gen'') = random gen'
-    in M (res, isPositive, fromIntegral value)
+-- genRandomEvent :: RandomGen g => g -> Event
+-- genRandomEvent gen = do
+--     let (event, gen') = randomR (0, size eventSet) gen
+--     fromMaybe (E ("", Map.empty)) (lookup value (zip [0..] (toList eventSet)))
 
--- genRandomModifier :: Nat -> Modifier
--- genRandomModifier n = do
---     let gen = mkStdGen 42
---         (value, gen') = randomR (0, n) gen
---         (positive, gen'') = random gen'
---         resourceType = case randomR (0, 2) gen'' of
---             0 -> Food
---             1 -> Clothes
---             _ -> Money
---     return (M (resourceType, positive, value))
-
--- genBoundedModifier :: ResourceType -> Nat -> Modifier
--- genBoundedModifier res n = do
---     (gen, _) <- newStdGen
---     let (value, gen') = randomR (0, n) gen
---         (positive, gen'') = random gen'  
---     return (M (res, positive, value))
-
--- generateRandomModifier :: RandomGen g => g -> Int -> (Modifier, g)
--- generateRandomModifier gen n =
---     let (value, gen') = randomR (0, n) gen
---         (isPositive, gen'') = random gen'
---         resourceType = case randomR (0, 2) gen'' of
---             0 -> Food
---             1 -> Clothes
---             _ -> Money
---     in (M (resourceType, isPositive, fromIntegral value), gen'')
-
--- generateBoundedModifier :: RandomGen g => g -> ResourceType -> Nat -> (Modifier, g)
--- generateBoundedModifier gen res n =
---     let (value, gen') = randomR (0, n) gen
---         (isPositive, gen'') = random gen'
---     in (M (res, isPositive, fromIntegral value), gen'')
-
--- generateEvent :: IO()
--- generateEvent = 
+-- eventRaiders :: Event
+-- eventRaiders = E ("A group of Raiders corner your wagon", riverMod) where
+--     gen = mkStdGen 42
+--     riverMod = (keepFood, keepClothes, genRandomModifier gen Money 100)

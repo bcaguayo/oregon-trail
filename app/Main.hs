@@ -2,6 +2,7 @@ module Main where
 
 import Control.Monad.Cont (MonadIO (liftIO))
 import Control.Monad.Except
+import Data.Type.Nat
 import GHC.Base (undefined)
 import GameState (shopActionM')
 import Locations
@@ -83,7 +84,7 @@ handleInput input gs =
           output "Traveling... \n" >> update (nextDate updatedGameState)
     Just Status -> output (printGameState gs) >> update gs
     Just Shop -> do
-      let newGameState = S.runState (runExceptT (shopActionM' Food True 10)) gs
+      let newGameState = S.runState (runExceptT (shopActionM' Food 10)) gs
       case newGameState of
         (Left errMsg, _) -> output errMsg >> update gs
         (Right _, updatedGameState) ->
@@ -154,10 +155,12 @@ shopFood gs = do
   output "How many pounds of food do you want to buy?"
   food <- inputb
   -- Parse an int from food
-  let parsedFood = read food :: Int
-  if parsedFood * 10 > getMoney gs
-    then output "You don't have enough money to buy that much food" >> shopFood gs
-    else shopClothes gs -- (shopActionM' (Shop food 0) gs)
+  let readInt = read food :: Int
+  let natFood = fromIntegral readInt :: Nat
+  let shoppingResult = S.runState (runExceptT (shopActionM' Food natFood)) gs
+  case shoppingResult of
+    (Left errMsg, _) -> output errMsg >> shopFood gs
+    (Right _, updatedGameState) -> output "You have bought some food \n" >> shopClothes updatedGameState
 
 shopClothes :: GameState -> IO ()
 shopClothes gs = undefined
