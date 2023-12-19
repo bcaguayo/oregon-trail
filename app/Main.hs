@@ -1,20 +1,16 @@
 module Main where
 
-import GameState
-import Options
-import GHC.Base (undefined)
 import Control.Monad.Cont (MonadIO (liftIO))
 import Control.Monad.Except
--- | This module imports the 'State' module and qualifies it with the alias 'S'.
-import qualified State as S
-import StateMonad
-import qualified Text as T
-import Trace
-import Locations
+import GHC.Base (undefined)
 import GameState (shopActionM')
-import qualified Text as T
-import Resources (ResourceType(Food))
-
+import Locations
+import Options
+import Resources (ResourceType (Food))
+import State qualified as S
+import StateMonad
+import Text qualified as T
+import Trace
 
 {-
 Basic Functionality:
@@ -52,7 +48,7 @@ play = do
 -- | This Game Loop is Cassia Approved
 update :: GameState -> IO ()
 update gs
-  -- | arrivedToLocation (mileage gs) = update' gs
+  -- \| arrivedToLocation (mileage gs) = update' gs
   | mileage gs > 2040 = output T.endGood
   | date gs > 266 = output T.endSlow
   | otherwise = do
@@ -114,23 +110,25 @@ handleInput input gs =
     Just Quit -> output "Bye Bye!"
     Nothing -> output "Invalid command, try again \n" >> update gs
 
-printLocation gs = T.printLocation l d m where
-  l = show (locationFromRange (mileage gs))
-  d = show (date gs)
-  m = show (mileage gs)
+printLocation gs = T.printLocation l d m
+  where
+    l = show (locationFromRange (mileage gs))
+    d = show (date gs)
+    m = show (mileage gs)
 
-printGameState gs = T.printGameState d m p h r where
-  d = show (date gs)
-  m = show (mileage gs)
-  p = show (pace gs)
-  h = show (health gs)
-  r = show (resources gs)
+printGameState gs = T.printGameState d m p h r
+  where
+    d = show (date gs)
+    m = show (mileage gs)
+    p = show (pace gs)
+    h = show (health gs)
+    r = show (resources gs)
 
 -- shopping :: GameState -> IO ()
 -- shopping gs = do
 --   output "How many pounds of food do you want to buy?"
 --   food <- inputb
---   if food * 10 > getMoney gs 
+--   if food * 10 > getMoney gs
 --     then output "You don't have enough money to buy that much food"
 --     else do
 --       output "How many sets of clothes do you want to buy?"

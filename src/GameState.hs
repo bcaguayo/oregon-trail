@@ -5,10 +5,11 @@ module GameState where
 import Control.Monad.Except
 import Control.Monad.State
 import Data.Map (Map)
+import Data.Set (Set)
+import Data.Set qualified as Set
 import Data.Type.Nat (Nat)
-import Locations (natToDate)
-import Options
 import Locations
+import Options
 import Resources
 import State as S
 import Test.HUnit
@@ -21,7 +22,6 @@ import Test.HUnit
   )
 import Test.QuickCheck ()
 import Text ()
-import Data.Set (Set)
 
 data Pace = Slow | Fast deriving (Show, Eq)
 
@@ -36,7 +36,7 @@ data GameState = GameState
     health :: HealthStatus,
     resources :: Resources ResourceType,
     status :: GameStatus,
-    visited :: Set Location
+    visitedSet :: Set Location
   }
   deriving (Eq)
 
@@ -88,7 +88,8 @@ initialGameState =
       pace = Slow,
       health = Healthy,
       resources = initialResources,
-      status = Playing
+      status = Playing,
+      visitedSet = initialVisitedSet
     }
 
 checkState :: GameState -> GameState
@@ -110,8 +111,17 @@ checkState gs
 5. this allows me to get options
 -}
 -- Pass In Mileage
+
+-- | Visit a new location based on the current mileage and update the visited locations set.
 visitNewLocation :: GameStateM ()
-visitNewLocation = undefined
+visitNewLocation = do
+  gs <- lift S.get
+  let currentMileage = mileage gs
+  let visitedLocations = visited gs -- Renamed local variable
+  let newLocation = getLocation currentMileage visitedLocations
+  unless (newLocation `Set.member` visitedLocations) $ do
+    let newVisited = Set.insert newLocation visitedLocations
+    lift $ S.put $ gs {visited = newVisited}
 
 -- | update game state
 updateGameStateM :: GameStateM ()
@@ -203,7 +213,6 @@ shopActionM = do
 
 -- shopActionM' :: ResourceType -> Bool -> Nat -> ExceptT String GameStateM ()
 -- shopActionM' res pos amount = undefined
-
 shopActionM' :: ResourceType -> Bool -> Nat -> GameStateM ()
 shopActionM' resourceType isBuying amount = do
   gs <- lift S.get -- Get the current game state.
@@ -212,25 +221,22 @@ shopActionM' resourceType isBuying amount = do
   -- Calculate the cost of the transaction.
   let cost = amount * 5 -- Assuming a unit cost of 5 for all resources.
 
-  -- Update resources based on whether the player is buying or selling.
+  -- Perform the resource update within the ExceptT monad.
   updatedResources <-
     if isBuying
       then do
         -- If buying, add the purchased resource.
         let resourcesAfterAddition = addResources' currentResources resourceType amount
 
-        -- Try to subtract the equivalent amount of money.
-        eitherResult <- runExceptT $ substractResources resourcesAfterAddition Money cost
-        case eitherResult of
-          Left errMsg -> throwError errMsg -- Throw error if funds are insufficient.
-          Right newResources -> return newResources
+        -- Subtract the equivalent amount of money.
+        substractResources resourcesAfterAddition Money cost
       else do
         -- Logic for selling resources.
         case minus (getResourceAmount currentResources resourceType) amount of
           Just n' -> return $ addResources' currentResources resourceType n'
-          Nothing -> throwError "Insufficient resources" -- Throw error if resources are insufficient.
+          Nothing -> throwError "Insufficient resources"
 
-  -- Update the game state with the new resources.
+  -- Apply the updated resources to the game state.
   lift $ S.put $ gs {resources = updatedResources}
 
 -- do
