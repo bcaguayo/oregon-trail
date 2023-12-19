@@ -284,6 +284,10 @@ addResources r rt n = return $ -- assume a permanent success
     Food -> r {food = food r + n}
     Clothes -> r {clothes = clothes r + n}
     Money -> r {money = money r + n}
+    Bullets -> r {bullets = bullets r + n}
+    Oxen -> r {oxen = oxen r + n}
+    Medicine -> r {medicine = medicine r + n}
+    Wheels -> r {wheels = wheels r + n}
 
 substractResources :: Resources s -> ResourceType -> Nat -> ExceptT String (S.State GameState) (Resources s)
 substractResources r rtype n = case rtype of
@@ -296,6 +300,18 @@ substractResources r rtype n = case rtype of
   Money -> case money r `minus` n of
     Just n' -> return $ r {money = n'}
     Nothing -> throwError "Insufficient funds"
+  Bullets -> case bullets r `minus` n of
+    Just n' -> return $ r {bullets = n'}
+    Nothing -> throwError "Insufficient bullets"
+  Oxen -> case oxen r `minus` n of
+    Just n' -> return $ r {oxen = n'}
+    Nothing -> throwError "Insufficient oxen"
+  Medicine -> case medicine r `minus` n of
+    Just n' -> return $ r {medicine = n'}
+    Nothing -> throwError "Insufficient medicine"
+  Wheels -> case wheels r `minus` n of
+    Just n' -> return $ r {wheels = n'}
+    Nothing -> throwError "Insufficient wheels"
 
 getMoney :: GameState -> Int
 getMoney gs = fromIntegral (money (resources gs))
