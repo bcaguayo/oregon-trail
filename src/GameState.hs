@@ -22,6 +22,8 @@ import Test.HUnit
 import Test.QuickCheck ()
 import Text ()
 import Data.Set (Set)
+import Events (Modifier (M), Event (E), Outcome (O))
+import Data.Maybe (fromMaybe)
 
 data Pace = Slow | Fast deriving (Show, Eq)
 
@@ -88,7 +90,8 @@ initialGameState =
       pace = Slow,
       health = Healthy,
       resources = initialResources,
-      status = Playing
+      status = Playing,
+      visited = initialVisitedSet
     }
 
 checkState :: GameState -> GameState
@@ -201,11 +204,8 @@ shopActionM = do
   updatedResources <- substractResources resourcesAfterAddingFood Money foodCost
   lift $ S.put $ gs {resources = updatedResources}
 
--- shopActionM' :: ResourceType -> Bool -> Nat -> ExceptT String GameStateM ()
--- shopActionM' res pos amount = undefined
-
-shopActionM' :: ResourceType -> Bool -> Nat -> GameStateM ()
-shopActionM' resourceType isBuying amount = do
+shopActionM' :: ResourceType -> Nat -> ExceptT String GameStateM ()
+shopActionM' resourceType amount = do
   gs <- lift S.get -- Get the current game state.
   let currentResources = resources gs
 
@@ -213,33 +213,18 @@ shopActionM' resourceType isBuying amount = do
   let cost = amount * 5 -- Assuming a unit cost of 5 for all resources.
 
   -- Update resources based on whether the player is buying or selling.
-  updatedResources <-
-    if isBuying
-      then do
+  updatedResources <- do
         -- If buying, add the purchased resource.
-        let resourcesAfterAddition = addResources' currentResources resourceType amount
+    let resourcesAfterAddition = addResources' currentResources resourceType amount
 
-        -- Try to subtract the equivalent amount of money.
-        eitherResult <- runExceptT $ substractResources resourcesAfterAddition Money cost
-        case eitherResult of
-          Left errMsg -> throwError errMsg -- Throw error if funds are insufficient.
-          Right newResources -> return newResources
-      else do
-        -- Logic for selling resources.
-        case minus (getResourceAmount currentResources resourceType) amount of
-          Just n' -> return $ addResources' currentResources resourceType n'
-          Nothing -> throwError "Insufficient resources" -- Throw error if resources are insufficient.
+    -- Try to subtract the equivalent amount of money.
+    eitherResult <- runExceptT $ substractResources resourcesAfterAddition Money cost
+    case eitherResult of
+      Left errMsg -> throwError errMsg -- Throw error if funds are insufficient.
+      Right newResources -> return newResources
 
   -- Update the game state with the new resources.
   lift $ S.put $ gs {resources = updatedResources}
-
--- do
--- gs <- lift S.get
--- -- First, add food resources
--- let updatedResources = if pos
---           then addResources (resources gs) res amount
---           else substractResources (resources gs) res amount
--- lift $ S.put $ gs {resources = updatedResources}
 
 paceActionM :: GameStateM ()
 paceActionM = lift $ S.modify $ \gs ->
@@ -338,5 +323,32 @@ substractResources r rtype n = case rtype of
     Just n' -> return $ r {wheels = n'}
     Nothing -> throwError "Insufficient wheels"
 
-getMoney :: GameState -> Int
-getMoney gs = fromIntegral (money (resources gs))
+wallet :: GameState -> Int
+wallet gs = fromIntegral (money (resources gs))
+
+-- | Shop Functions
+{-
+If succesful shopping return new game state
+If not succesful shopping return error message "Not enought money"
+-}
+shopping :: ResourceType -> Nat -> GameState -> ExceptT String GameStateM ()
+shopping res amount = S.runState (runExceptT (shopActionM' res amount))
+
+-- | Event Functions
+applyModifier :: Resources s -> Modifier -> ExceptT String (S.State GameState.GameState) (Resources s)
+applyModifier r (M (rt, b, n)) = if b then addResources r rt n else substractResources r rt n
+
+-- applyModifiers :: Resources s -> Set Modifier -> ExceptT String (S.State GameState.GameState) (Resources s)
+applyModifiers :: Resources s -> Set Modifier -> ExceptT String (S.State GameState) (Resources s)
+applyModifiers = foldM applyModifier
+
+applyOutcome :: Resources s -> Outcome -> Resources s
+applyOutcome r (O (_, ms)) = applyModifiers r ms
+
+applyEvent :: Nat -> Event -> Resources s -> Resources s
+applyEvent option event res = case event of
+  E (_, outcomeList) -> applyOutcome res outcome where
+    outcome = outcomeList !! fromIntegral option
+  -- case Map.lookup option (eventMap event) of
+  --   Just (O (_, ms)) -> applyModifiers res ms
+  --   Nothing -> res

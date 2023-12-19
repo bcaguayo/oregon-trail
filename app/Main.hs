@@ -14,6 +14,7 @@ import Locations
 import GameState (shopActionM')
 import qualified Text as T
 import Resources (ResourceType(Food))
+import Text (notEnough)
 
 
 {-
@@ -157,9 +158,10 @@ shopFood gs = do
   food <- inputb
   -- Parse an int from food
   let parsedFood = read food :: Int
-  if parsedFood * 10 > getMoney gs
-    then output "You don't have enough money to buy that much food" >> shopFood gs
-    else shopClothes gs -- (shopActionM' (Shop food 0) gs)
+  if parsedFood * 10 > wallet gs
+    then output notEnough >> shopFood gs
+    else 
+      shopClothes gs -- (shopActionM' (Shop food 0) gs) 
 
 shopClothes :: GameState -> IO ()
 shopClothes gs = undefined
