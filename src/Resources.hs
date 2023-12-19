@@ -1,7 +1,5 @@
 module Resources where
 
--- import qualified Data.Nat
-
 import Data.Map (Map)
 import Data.Type.Nat
 

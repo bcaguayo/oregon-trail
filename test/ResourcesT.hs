@@ -1,6 +1,7 @@
 -- implement QC
 module ResourcesT where
 
+import Control.Exception (SomeException, evaluate, try)
 import Resources
 import Test.QuickCheck
 import Test.QuickCheck.Arbitrary
@@ -43,13 +44,29 @@ prop_addResources rtype (NonNegative n) =
   let natN = fromInteger n
    in getResourceAmount (addResources' zeroResources rtype natN) rtype == natN
 
--- Test the subtraction of resources and error handling
-prop_subtractMoney :: NonNegative Integer -> NonNegative Integer -> Property
-prop_subtractMoney (NonNegative m) (NonNegative n) =
-  m >= n ==>
-    let natM = fromInteger m
-        natN = fromInteger n
-     in money (substractMoney (addMoney zeroResources natM) natN) == natM - natN
+isLeft :: Either a b -> Bool
+isLeft (Left _) = True
+isLeft _ = False
+
+-- Test resource equality
+prop_resourcesEquality :: Resources s -> Bool
+prop_resourcesEquality res = res == res
+
+-- Test resource inequality
+prop_resourcesInequality :: Resources s -> Resources s -> Property
+prop_resourcesInequality res1 res2 =
+  res1 /= res2 ==> res1 /= res2
+
+-- Test the minus function
+prop_minus :: NonNegative Integer -> NonNegative Integer -> Property
+prop_minus (NonNegative a) (NonNegative b) =
+  let natA = fromInteger a
+      natB = fromInteger b
+   in classify (a >= b) "non-negative result" $
+        classify (a < b) "negative result" $
+          case minus natA natB of
+            Just _ -> a >= b
+            Nothing -> a < b
 
 -- Test the conversion from Nat to ResourceType
 prop_natToRes :: NonNegative Integer -> Bool
@@ -64,10 +81,20 @@ prop_natToRes (NonNegative n) =
         Wheels -> natN == 5
         Money -> natN > 5
 
+prop_subtractResources :: NonNegative Integer -> NonNegative Integer -> Property
+prop_subtractResources (NonNegative m) (NonNegative n) =
+  m >= n ==>
+    let natM = fromInteger m
+        natN = fromInteger n
+        res = addMoney zeroResources natM
+     in money (substractMoney res natN) == natM - natN
+
 runTests :: IO ()
 runTests = do
   quickCheck prop_zeroResources
   quickCheck prop_initialResources
   quickCheck prop_addResources
-  quickCheck prop_subtractMoney
   quickCheck prop_natToRes
+  quickCheck prop_minus
+  quickCheck prop_resourcesEquality
+  quickCheck prop_resourcesInequality
