@@ -102,7 +102,14 @@ checkState gs
     gsE = gs {status = GameEnd}
     gsO = gs {status = GameOver}
 
-
+{-
+1. Use getLocation from Locations Module
+2. Pass in the mileage from the state
+3. Update the state and add the new location
+4. return the location given by getLocation
+5. this allows me to get options
+-}
+-- Pass In Mileage
 visitNewLocation :: GameStateM ()
 visitNewLocation = undefined
 
