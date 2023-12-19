@@ -1,7 +1,9 @@
 module GameStateT where
 
 import Control.Monad.Except (ExceptT, runExceptT)
+import Data.Set qualified as Set
 import GameState
+import Locations
 import Resources
 import State qualified as S
 import Test.HUnit
@@ -137,6 +139,16 @@ testRestAction = TestCase $ do
     Left errMsg -> assertFailure $ "Error during rest action: " ++ errMsg
     Right _ -> assertEqual "Health should improve after rest" Healthy (health state')
 
+testVisitNewLocation :: Test
+testVisitNewLocation = TestCase $ do
+  let state = initialGameState {mileage = 10, visitedSet = initialVisitedSet}
+  let (result, state') = S.runState (runExceptT visitNewLocation) state
+
+  case result of
+    Left errMsg -> assertFailure $ "Error during visiting new location: " ++ errMsg
+    Right _ -> do
+      assertBool "MissouriRiver should be in visited set" (MissouriRiver `Set.member` visited state')
+
 tests :: Test
 tests =
   TestList
@@ -150,7 +162,8 @@ tests =
       testPaceAction,
       testAddFoodOnly,
       testShopAction,
-      testRestAction
+      testRestAction,
+      testVisitNewLocation
     ]
 
 runTest :: IO ()
