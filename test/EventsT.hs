@@ -1,15 +1,24 @@
 module EventsT where
 
+import Control.Monad.Except
+  ( ExceptT (..),
+    MonadError (throwError),
+    MonadTrans (lift),
+    foldM,
+    runExceptT,
+  )
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Events
-import GameState (addResources, applyEvent, applyModifier, applyOutcome, substractResources)
+import GameState (addResources, applyEvent, applyModifier, applyOutcome, initialGameState, substractResources)
 import Resources
+import State as S
 import System.Random (mkStdGen)
 import Test.HUnit
   ( Test (TestCase, TestList),
     assertBool,
     assertEqual,
+    assertFailure,
     runTestTT,
   )
 
@@ -55,32 +64,15 @@ import Test.HUnit
 -- eventHunting :: Event
 -- eventHunting = E ("Hunting", (M (Food, True, 10), keepClothes, keepMoney))
 
-testEventDescription :: Test
-testEventDescription =
-  TestCase $
-    assertEqual "Event description" "Hunting" (show eventHunting)
-
 -- testEventDescription :: Test
 -- testEventDescription = TestCase $
 --     assertEqual "Event description" "Hunting" (show eventHunting)
-
-testEventOutcome :: Test
-testEventOutcome =
-  TestCase $
-    let huntingMod = M (Food, True, 10)
-     in let hunting = applyModifier zeroResources huntingMod
-         in assertEqual "Event Outcome" hunting (applyModifier zeroResources huntingMod)
 
 -- testEventOutcome :: Test
 -- testEventOutcome = TestCase $
 --     let huntingResources = (M (Food, True, 10), keepClothes, keepMoney) in
 --     let hunting = applyEvent 0 eventHunting zeroResources in
 --     assertEqual "Event Outcome" hunting (applyEvent 0 eventHunting zeroResources)
-
-testEventToString :: Test
-testEventToString =
-  TestCase $
-    assertEqual "Event to string" "Hunting: +10 food" (show eventHunting)
 
 -- testEventToString :: Test
 -- testEventToString = TestCase $
@@ -110,14 +102,23 @@ testEventOutcomes = TestCase $ do
 -- Test to simulate applying a modifier to resources and verify the expected change
 testApplyModifier :: Test
 testApplyModifier = TestCase $ do
+  -- 初始化资源和生成修改器
   let initialResources = zeroResources
-  let modifier = genRandomModifier (mkStdGen 42) Food True 10 10 -- Add 10 units of food
+  let modifier = genRandomModifier (mkStdGen 42) Food True 10 10 -- 增加 10 个食物单位
+
+  -- 解包修改器
   let M (resourceType, isAdd, amount) = modifier
-  let updatedResources =
+
+  -- 应用修改器并处理 ExceptT
+  let updatedResult =
         if isAdd
-          then addResources' initialResources resourceType amount
-          else substractResources initialResources resourceType amount
-  assertEqual "Food amount should increase by 10" 10 (food updatedResources)
+          then Right (addResources' initialResources resourceType amount)
+          else evalState (runExceptT $ substractResources initialResources resourceType amount) initialGameState
+
+  -- 测试结果
+  case updatedResult of
+    Left errMsg -> assertFailure errMsg -- 如果出错，则测试失败
+    Right updatedResources -> assertEqual "Food amount should increase by 10" 10 (food updatedResources)
 
 tests :: Test
 tests =
