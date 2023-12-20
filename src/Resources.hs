@@ -35,6 +35,15 @@ zeroResources = Resources {food = 0, clothes = 0, bullets = 0, oxen = 0, medicin
 initialResources :: Resources s
 initialResources = Resources {food = 0, clothes = 0, bullets = 0, oxen = 0, medicine = 0, wheels = 0, money = 700}
 
+bankerResources :: Resources s
+bankerResources = zeroResources {money = 1000}
+
+carpenterResources :: Resources s
+carpenterResources = zeroResources {money = 800}
+
+farmerResources :: Resources s
+farmerResources = zeroResources {money = 400}
+
 addMoney :: Resources s -> Nat -> Resources s
 addMoney r n = r {money = money r + n}
 
@@ -104,7 +113,7 @@ shopTile Clothes = "sets of clothing"
 shopTile Bullets = "boxes of bullets"
 shopTile Oxen = "oxen"
 shopTile Medicine = "packs of medicine"
-shopTile Wheels = "wagon wheels"
+shopTile Wheels = "extra wagon wheels"
 shopTile _ = "You can't buy that"
 
 shopNatToString :: Nat -> String

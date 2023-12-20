@@ -44,13 +44,22 @@ parseTownCommand input = case map toLower input of
     "3" -> Just Quit
     _ -> Nothing
 
-data Profession = Banker | Carpenter | Farmer deriving (Eq, Show)
+data Profession = Banker | Carpenter | Farmer | Professions deriving (Eq, Show)
+
+parseProfInt :: String -> Maybe Profession
+parseProfInt input = case map toLower input of
+  "1" -> Just Banker
+  "2" -> Just Carpenter
+  "3" -> Just Farmer
+  "4" -> Just Professions
+  _ -> Nothing
 
 parseProfession :: String -> Maybe Profession
 parseProfession input = case map toLower input of
   "banker" -> Just Banker
   "carpenter" -> Just Carpenter
   "farmer" -> Just Farmer
+  "professions" -> Just Professions
   _ -> Nothing
 
 data ShopCommand

@@ -151,7 +151,7 @@ printLocation location date mileage =
 
 printGameState :: String -> String -> String -> String -> String -> String
 printGameState date mileage pace health resources = 
-  "___________________________\nGame State:" ++
+  "___________________________\nGame State:\n" ++
   "Date: " ++ date ++ "\n" ++ "Mileage: " ++ mileage ++ "\n" ++
   "Pace: " ++ pace ++ "\n" ++ "Health: " ++ health ++ "\n" ++
   "Resources: " ++ resources ++ "\n" ++
