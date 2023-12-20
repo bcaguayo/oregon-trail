@@ -3,26 +3,15 @@ module Main where
 import Test.HUnit
 import Test.QuickCheck
 
-import GameStateT
+import GameStateT ( tests )
+import EventsT ( tests )
+import ResourcesT ( runTests )
 
 main :: IO()
 main = do
-    putStrLn "main testing ..."
+    putStrLn "gamestate testing ..."
     runTestTT GameStateT.tests >>= print
-
--- >>> main
-
-
--- Test the main function
--- testMain :: Test
--- testMain = TestCase $ do
---     -- Test the output of the main function
---     output <- captureOutput main
---     assertEqual "Unexpected output" "Hello, World!" output
-
--- Test suite
--- main :: IO ()
--- main = do
---     -- Run the test cases
---     runTestTT $ TestList [testMain]
---     putStrLn "Test suite completed"
+    putStrLn "resource testing ..."
+    ResourcesT.runTests
+    putStrLn "event testing ..."
+    runTestTT EventsT.tests >>= print

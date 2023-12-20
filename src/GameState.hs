@@ -9,18 +9,27 @@ import Control.Monad.Except
     foldM,
     runExceptT,
   )
-import Control.Monad.State
+import Control.Monad.State ( foldM, unless, MonadTrans(lift) )
 import Data.Map (Map)
 import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Type.Nat (Nat)
 import Events (Event (E), Modifier (M), Outcome (O))
-import Locations (Location, natToDate, initialVisitedSet, getLocation, locationFromRange)
+import Locations (Location (Roadside), natToDate, initialVisitedSet, getLocation, locationFromRange, showDate)
 import Options
+    ( Profession(Farmer, Banker, Carpenter), Command(..) )
 import qualified Text as T
 import Resources
-import State as S
+    ( Resources(money, food, clothes, bullets, oxen, medicine, wheels),
+      ResourceType(..),
+      bankerResources,
+      carpenterResources,
+      farmerResources,
+      addResources',
+      substractResources',
+      minus )
+import State as S ( State, get, put, modify )
 import Test.HUnit
   ( State,
     Test (TestCase, TestList),
@@ -85,7 +94,7 @@ paceSlow = 95
 instance Show GameState where
   show gs =
     "Status: { Date: "
-      ++ natToDate (fromIntegral (date gs))
+      ++ showDate (fromIntegral (date gs))
       ++ ", Mileage: "
       ++ show (mileage gs)
       ++ ", Pace: "
@@ -142,8 +151,9 @@ checkState gs
 printLocation :: GameState -> String
 printLocation gs = T.printLocation l d m
   where
-    l = show (locationFromRange (mileage gs))
-    d = show (date gs)
+    loc = getLocation (mileage gs) (visitedSet gs)
+    l = show loc
+    d = showDate (fromIntegral (date gs))
     m = show (mileage gs)
 
 printGameState :: GameState -> String
@@ -232,7 +242,7 @@ travelActionM = do
   gs <- lift S.get
   let updatedMileage = mileage gs + travelDistance (pace gs)
       updatedDate = date gs + 1
-  newResources <- substractResources (resources gs) Food 5
+  newResources <- substractResources (resources gs) Food 1
   lift $ S.put $ gs {date = updatedDate, resources = newResources, mileage = updatedMileage}
 
 -- | Process rest action in the game.

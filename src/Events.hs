@@ -10,6 +10,8 @@ import Resources
     Resources,
   )
 import System.Random (Random, RandomGen, mkStdGen, random, randomR)
+import System.Random.Stateful (StdGen)
+import qualified Text as T
 
 -- | A Modifier stores:
 -- 1. A ResourceType we want to change
@@ -100,6 +102,26 @@ eventRaiders = E ("A group of Raiders corner your wagon", raidersOutcomes)
     raiderOutcomeBad = O ("Run", fromList [modLoseFoodBad, modLoseClothes])
     raidersOutcomes = [raiderOutcomeGood, raiderOutcomeBad]
 
+eventIllness :: Event
+eventIllness = E (T.illnessEvent ++ illness, illnessOutcomes)
+  where
+    rdm = fst (randomR(0,4) (mkStdGen 42) :: (Int, StdGen))
+    illness = T.illnesses !! rdm
+    modLoseFood = genRandomModifier (mkStdGen 42) Food False 10 30
+    modLoseMedicine = genRandomModifier (mkStdGen 42) Medicine False 1 3
+    illnessOutcomeGood = O ("Take Medicine", fromList [modLoseMedicine])
+    illnessOutcomeBad = O ("Rest", fromList [modLoseFood])
+    illnessOutcomes = [illnessOutcomeGood, illnessOutcomeBad]
+
+eventNatives :: Event
+eventNatives = E ("You have encountered a group of friendly natives", nativesOutcomes)
+  where
+    modGainFood = genRandomModifier (mkStdGen 42) Food True 20 20
+    modLoseClothes = genRandomModifier (mkStdGen 42) Clothes False 1 1
+    nativesOutcomeA = O ("Trade", fromList [modGainFood, modLoseClothes])
+    nativesOutcomeB = O ("Leave", fromList [])
+    nativesOutcomes = [nativesOutcomeA, nativesOutcomeB]
+
 -- | A set of all possible events.
 eventSet :: Set Event
 eventSet = Set.fromList [eventHunting, eventRiver, eventRaiders]
@@ -109,3 +131,9 @@ genRandomEvent :: (RandomGen g) => g -> Event
 genRandomEvent gen = do
   let (event, gen') = randomR (0, size eventSet) gen
   fromMaybe (E ("", [])) (lookup event (zip [0 ..] (toList eventSet)))
+
+
+makeEvent :: Maybe Event
+makeEvent = if rdm == 0 then Just (genRandomEvent gen') else Nothing where
+    gen = mkStdGen 42
+    (rdm, gen') = randomR (0, 9) gen :: (Int, StdGen)

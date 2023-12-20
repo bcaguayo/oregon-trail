@@ -54,6 +54,9 @@ help = "To play: Type the number of your chosen command and press enter \n"
 endGood :: String
 endGood = "You have reached Oregon, Congratulations!\n"
 
+endFood :: String
+endFood = "You run out of food and your family starves to death\n"
+
 endIll :: String
 endIll = "You have died of dysentery\n"
 
@@ -160,6 +163,13 @@ printGameState date mileage pace health resources =
 notEnough :: String
 notEnough = "You don't have enough money for this purchase"
 
+oxenRange :: String
+oxenRange = "You can buy 2-4 oxen"
+
+shopWelcome :: String
+shopWelcome = "Welcome to the shop! \n" ++
+              "You just spent $200 on a wagon. \n"
+
 shopOptions :: String
 shopOptions = "What would you like to buy? \n" ++
               "1. Food \n" ++
@@ -169,3 +179,13 @@ shopOptions = "What would you like to buy? \n" ++
               "5. Medicine \n" ++
               "6. Wagon Wheels \n" ++
               "7. Leave \n"
+
+illnessEvent :: String
+illnessEvent = "You have fallen contracted "
+
+illnesses :: [String]
+illnesses = ["cholera", "dysentery", "measles", "typhoid", "a snakebite"]
+
+eventTrade :: String
+eventTrade = "You have encountered a group of friendly natives\n" ++
+  "You can trade one set of clothes for 20 pounds of food\n"

@@ -44,13 +44,11 @@ library
       common-stanza
   exposed-modules:
       State
-      StateMonad
       GameState
       Text
       Events
       Options
       Locations
-      Shop
       Trace
       Resources
   hs-source-dirs:
@@ -87,5 +85,4 @@ test-suite oregon-trail-test
       LocationsT
       OptionsT
       ResourcesT
-      ShopT
       TraceT

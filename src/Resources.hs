@@ -111,7 +111,7 @@ natToRes _ = Money
 
 -- | Function to get the cost of a specific resource type.
 resCost :: ResourceType -> Nat
-resCost Food = 10
+resCost Food = 2
 resCost Clothes = 15
 resCost Bullets = 5
 resCost Oxen = 100
