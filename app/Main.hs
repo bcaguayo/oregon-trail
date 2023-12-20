@@ -33,7 +33,7 @@ play :: IO ()
 play = do
   output T.version
   -- Get User Name
-  output "Enter your name: " >> inputb >>= output . ("Hello, " ++) >> output "!"
+  output "Enter your name: " >> inputb >>= (\name -> output ("Hello, " ++ name ++ "!"))
   -- Display Instructions
   output T.introShort
   output T.instructionsQ
@@ -43,11 +43,29 @@ play = do
     "no" -> output "Good luck! \n"
     _ -> output "Invalid command, try again" >> play
   -- Choose your Profession
-  output T.professions >> inputb >>= output . ("You have chosen: " ++)
+  track <- profession
   -- Choose what to buy
-  gs <- shopInitial initialGameState
+  gs <- shopInitial track
+  -- | Print GS
+  output (printGameState gs)
   -- Play Game
   update gs
+
+
+profession = do
+  output T.professions
+  job <- inputb
+  case parseProfInt job of
+    Just Professions -> output T.pDescriptions >> profession
+    Just job -> case setTrack job of
+      Just gs -> output ("You have chosen: " ++ show job) >> return gs
+      Nothing -> output "Invalid profession, try again" >> profession
+    _ -> output "Invalid profession, try again" >> profession
+    -- Just Professions -> output T.pDescriptions >> profession
+    -- Just p -> output ("You have chosen: " ++ job) >> return p
+    -- Nothing -> output "Invalid profession, try again" >> profession
+
+-- >>> :t profession
 
 -- | This Game Loop is Cassia Approved
 update :: GameState -> IO ()
@@ -87,12 +105,7 @@ handleInput input gs =
         (Right _, updatedGameState) ->
           output "Traveling... \n" >> update (nextDate updatedGameState)
     Just Status -> output (printGameState gs) >> update gs
-    Just Shop -> do
-      let newGameState = S.runState (runExceptT (performActionM Shop)) gs
-      case newGameState of
-        (Left errMsg, _) -> output errMsg >> update gs
-        (Right _, updatedGameState) ->
-          output "You have bought some stuff \n" >> update updatedGameState
+    Just Shop -> shopOption gs >>= update
     Just Help -> output T.help >> update gs
     Just Hunt -> do
       let newGameState = S.runState (runExceptT (performActionM Hunt)) gs
@@ -115,20 +128,6 @@ handleInput input gs =
     Just Quit -> output "Bye Bye!"
     Nothing -> output "Invalid command, try again \n" >> update gs
 
-printLocation gs = T.printLocation l d m
-  where
-    l = show (locationFromRange (mileage gs))
-    d = show (date gs)
-    m = show (mileage gs)
-
-printGameState gs = T.printGameState d m p h r
-  where
-    d = show (date gs)
-    m = show (mileage gs)
-    p = show (pace gs)
-    h = show (health gs)
-    r = show (resources gs)
-
 -- | For each resource we need, shop tile and cost per unit
 shopping gs rt = do
   -- | get components according to resource type
@@ -143,11 +142,12 @@ shopping gs rt = do
     then output T.notEnough >> return gs
     -- | otherwise, update game state
     else do
-      let newGameState = shopAction gs Food natAmount
+      let newGameState = shopAction gs rt natAmount
       output ("You have bought " ++ show natAmount ++ " " ++ resName ++  " \n") >> return newGameState
 
 -- | At the beggining of the game, call all functions sequentially
 shopInitial gs = do
+  output "Welcome to the shop! \n You just spent $200 on a wagon. \n"
   gsOne <- shopping gs Food
   gsTwo <- shopping gsOne Clothes
   gsThree <- shopping gsTwo Bullets

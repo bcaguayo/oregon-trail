@@ -47,15 +47,22 @@ parseTownCommand input = case map toLower input of
   "3" -> Just Quit
   _ -> Nothing
 
--- | Enumerated type for professions in the game.
-data Profession = Banker | Carpenter | Farmer deriving (Eq, Show)
+data Profession = Banker | Carpenter | Farmer | Professions deriving (Eq, Show)
 
--- | Parse a string input into a Profession, if possible.
+parseProfInt :: String -> Maybe Profession
+parseProfInt input = case map toLower input of
+  "1" -> Just Banker
+  "2" -> Just Carpenter
+  "3" -> Just Farmer
+  "4" -> Just Professions
+  _ -> Nothing
+
 parseProfession :: String -> Maybe Profession
 parseProfession input = case map toLower input of
   "banker" -> Just Banker
   "carpenter" -> Just Carpenter
   "farmer" -> Just Farmer
+  "professions" -> Just Professions
   _ -> Nothing
 
 -- | Enumerated type for commands available in the shop.

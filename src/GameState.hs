@@ -16,8 +16,9 @@ import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Type.Nat (Nat)
 import Events (Event (E), Modifier (M), Outcome (O))
-import Locations (Location, getLocation, initialVisitedSet, natToDate)
+import Locations (Location, natToDate, initialVisitedSet, getLocation, locationFromRange)
 import Options
+import qualified Text as T
 import Resources
 import State as S
 import Test.HUnit
@@ -31,8 +32,9 @@ import Test.HUnit
 import Test.QuickCheck ()
 import Text ()
 
--- | Definitions for game pace.
-data Pace = Slow | Fast deriving (Show, Eq)
+data Pace = Fast | Slow deriving (Show, Eq)
+
+data Marksmanship = Ace | Fair | Shaky deriving (Show, Eq)
 
 -- | Health status of the player.
 data HealthStatus = Healthy | Ill | Critical deriving (Show, Eq)
@@ -45,6 +47,7 @@ data GameState = GameState
   { date :: Nat,
     mileage :: Nat,
     pace :: Pace,
+    marksmanship :: Marksmanship,
     health :: HealthStatus,
     resources :: Resources ResourceType,
     status :: GameStatus,
@@ -100,13 +103,20 @@ initialGameState =
     { date = 1,
       mileage = 0,
       pace = Slow,
+      marksmanship = Fair,
       health = Healthy,
-      resources = initialResources,
+      resources = carpenterResources,
       status = Playing,
       visitedSet = initialVisitedSet
     }
 
--- | Check the state of the game and update the status.
+-- setMarksmanship :: GameState -> Marksmanship -> GameState
+setTrack :: Profession -> Maybe GameState
+setTrack Banker = Just initialGameState {marksmanship = Shaky, resources = bankerResources}
+setTrack Carpenter = Just initialGameState {marksmanship = Fair, resources = carpenterResources}
+setTrack Farmer = Just initialGameState {marksmanship = Ace, resources = farmerResources}
+setTrack _ = Nothing
+
 checkState :: GameState -> GameState
 checkState gs
   | date gs > 266 = gsO
@@ -126,6 +136,24 @@ checkState gs
 5. this allows me to get options
 -}
 -- Pass In Mileage
+
+-- | Prints
+
+printLocation :: GameState -> String
+printLocation gs = T.printLocation l d m
+  where
+    l = show (locationFromRange (mileage gs))
+    d = show (date gs)
+    m = show (mileage gs)
+
+printGameState :: GameState -> String
+printGameState gs = T.printGameState d m p h r
+  where
+    d = show (date gs)
+    m = show (mileage gs)
+    p = show (pace gs)
+    h = show (health gs)
+    r = show (resources gs)
 
 -- | Visit a new location based on the current mileage and update the visited locations set.
 visitNewLocation :: GameStateM ()
