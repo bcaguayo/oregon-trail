@@ -1,6 +1,7 @@
 module Options where
 
 import Data.Char (toLower)
+import qualified Resources as R (ResourceType (..))
 
 data Command
   = Help
@@ -11,16 +12,6 @@ data Command
   | Rest
   | Hunt
   | Quit
-  deriving (Eq, Show)
-
-data ShopCommand
-  = BuyFood
-  | BuyClothes
-  | BuyMedicine
-  | BuyBullets
-  | BuyOxen
-  | BuyWheels
-  | Leave
   deriving (Eq, Show)
 
 parseCommand :: String -> Maybe Command
@@ -60,4 +51,24 @@ parseProfession input = case map toLower input of
   "banker" -> Just Banker
   "carpenter" -> Just Carpenter
   "farmer" -> Just Farmer
+  _ -> Nothing
+
+data ShopCommand
+  = BuyFood
+  | BuyClothes
+  | BuyBullets
+  | BuyOxen
+  | BuyMedicine
+  | BuyWheels
+  | Leave
+  deriving (Eq, Show)
+
+parseShopCommand :: String -> Maybe R.ResourceType
+parseShopCommand input = case input of
+  "1" -> Just R.Food
+  "2" -> Just R.Clothes
+  "3" -> Just R.Bullets
+  "4" -> Just R.Oxen
+  "5" -> Just R.Medicine
+  "6" -> Just R.Wheels
   _ -> Nothing

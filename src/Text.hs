@@ -157,9 +157,15 @@ printGameState date mileage pace health resources =
   "Resources: " ++ resources ++ "\n" ++
   "___________________________\n"
 
-shopTiles :: [String]
-shopTiles = ["pounds of food", "sets of clothing", "boxes of bullets", 
-             "oxen", "packs of medicine", "wagon wheels"]
-
 notEnough :: String
 notEnough = "You don't have enough money for this purchase"
+
+shopOptions :: String
+shopOptions = "What would you like to buy? \n" ++
+              "1. Food \n" ++
+              "2. Clothes \n" ++
+              "3. Bullets \n" ++
+              "4. Oxen \n" ++
+              "5. Medicine \n" ++
+              "6. Wagon Wheels \n" ++
+              "7. Leave \n"

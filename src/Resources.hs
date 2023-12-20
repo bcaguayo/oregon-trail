@@ -64,26 +64,6 @@ substractResources' r rtype n = case rtype of
   Wheels -> r {wheels = fromMaybe (wheels r) (wheels r `minus` n)}
   Money -> r {money = fromMaybe (money r) (money r `minus` n)}
 
-addResources' :: Resources s -> ResourceType -> Nat -> Resources s
-addResources' r rtype n = case rtype of
-  Food -> r {food = food r + n}
-  Clothes -> r {clothes = clothes r + n}
-  Bullets -> r {bullets = bullets r + n}
-  Oxen -> r {oxen = oxen r + n}
-  Medicine -> r {medicine = medicine r + n}
-  Wheels -> r {wheels = wheels r + n}
-  Money -> r {money = money r + n}
-
-substractResources' :: Resources s -> ResourceType -> Nat -> Resources s
-substractResources' r rtype n = case rtype of
-  Food -> r {food = fromMaybe (food r) (food r `minus` n)}
-  Clothes -> r {clothes = fromMaybe (clothes r) (clothes r `minus` n)}
-  Bullets -> r {bullets = fromMaybe (bullets r) (bullets r `minus` n)}
-  Oxen -> r {oxen = fromMaybe (oxen r) (oxen r `minus` n)}
-  Medicine -> r {medicine = fromMaybe (medicine r) (medicine r `minus` n)}
-  Wheels -> r {wheels = fromMaybe (wheels r) (wheels r `minus` n)}
-  Money -> r {money = fromMaybe (money r) (money r `minus` n)}
-
 getResourceAmount :: Resources s -> ResourceType -> Nat
 getResourceAmount r rtype = case rtype of
   Food -> food r

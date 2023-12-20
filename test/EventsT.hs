@@ -236,6 +236,10 @@ If not succesful shopping return error message "Not enought money"
   --   Left errMsg -> throwError errMsg
   --   Right _ -> lift (S.put newGs)
 
+-- let shoppingResult =  S.runState (runExceptT (shopActionM' Food natFood)) gs
+-- case shoppingResult of
+--   (Left errMsg, _) -> output errMsg >> shopFood gs
+--   (Right _, updatedGameState) -> output "You have bought some food \n" >> shopClothes updatedGameState
 -}
 
 -- Generate a random event
