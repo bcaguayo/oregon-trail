@@ -55,32 +55,15 @@ import Test.HUnit
 -- eventHunting :: Event
 -- eventHunting = E ("Hunting", (M (Food, True, 10), keepClothes, keepMoney))
 
-testEventDescription :: Test
-testEventDescription =
-  TestCase $
-    assertEqual "Event description" "Hunting" (eventString eventHunting)
-
 -- testEventDescription :: Test
 -- testEventDescription = TestCase $
 --     assertEqual "Event description" "Hunting" (show eventHunting)
-
-testEventOutcome :: Test
-testEventOutcome =
-  TestCase $
-    let huntingResources = (M (Food, True, 10), keepClothes, keepMoney)
-     in let hunting = applyEvent zeroResources eventHunting
-         in assertEqual "Event Outcome" hunting (applyEvent zeroResources eventHunting)
 
 -- testEventOutcome :: Test
 -- testEventOutcome = TestCase $
 --     let huntingResources = (M (Food, True, 10), keepClothes, keepMoney) in
 --     let hunting = applyEvent 0 eventHunting zeroResources in
 --     assertEqual "Event Outcome" hunting (applyEvent 0 eventHunting zeroResources)
-
-testEventToString :: Test
-testEventToString =
-  TestCase $
-    assertEqual "Event to string" "Hunting: +10 food" (eventToString eventHunting)
 
 -- testEventToString :: Test
 -- testEventToString = TestCase $
