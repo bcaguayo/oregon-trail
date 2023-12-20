@@ -15,18 +15,6 @@ data Command
   | Quit
   deriving (Eq, Show)
 
--- | Parse a string input into a Command, if possible.
-parseCommand :: String -> Maybe Command
-parseCommand input = case map toLower input of
-  "help" -> Just Help
-  "quit" -> Just Quit
-  "status" -> Just Status
-  "travel" -> Just Travel
-  "rest" -> Just Rest
-  "shop" -> Just Shop
-  "pace" -> Just Pace
-  _ -> Nothing
-
 -- | Parses a string input into a Command based on integer input.
 parseInt :: String -> Maybe Command
 parseInt input = case map toLower input of
@@ -57,14 +45,6 @@ parseProfInt input = case map toLower input of
   "4" -> Just Professions
   _ -> Nothing
 
-parseProfession :: String -> Maybe Profession
-parseProfession input = case map toLower input of
-  "banker" -> Just Banker
-  "carpenter" -> Just Carpenter
-  "farmer" -> Just Farmer
-  "professions" -> Just Professions
-  _ -> Nothing
-
 -- | Enumerated type for commands available in the shop.
 data ShopCommand
   = BuyFood
@@ -85,4 +65,4 @@ parseShopCommand input = case input of
   "4" -> Just R.Oxen
   "5" -> Just R.Medicine
   "6" -> Just R.Wheels
-  _ -> Nothing
+  _ -> Nothing  

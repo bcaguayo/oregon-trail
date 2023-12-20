@@ -46,10 +46,10 @@ library
       State
       GameState
       Text
+      Trace
       Events
       Options
       Locations
-      Trace
       Resources
   hs-source-dirs:
       src
@@ -85,4 +85,3 @@ test-suite oregon-trail-test
       LocationsT
       OptionsT
       ResourcesT
-      TraceT

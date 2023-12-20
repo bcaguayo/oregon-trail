@@ -90,6 +90,9 @@ instance Show Event where
 eventHeader :: Event -> String
 eventHeader (E (s, _)) = s
 
+eventOutcomes :: Event -> [Outcome]
+eventOutcomes (E (_, os)) = os
+
 -- >>> show eventRiver
 -- "You Found A River\nLook for a Bridge: -41 money\nCross the River: -5 food, -5 clothes, -1 oxen"
 

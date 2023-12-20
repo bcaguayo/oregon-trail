@@ -13,6 +13,7 @@ import Locations
 import Options
 import Trace
 import Text.Read (readMaybe)
+import Data.Maybe (fromJust)
 
 {-
 Basic Functionality:
@@ -52,7 +53,6 @@ play = do
   -- Play Game
   update gs
 
-
 profession :: IO GameState
 profession = do
   output T.professions
@@ -71,12 +71,23 @@ update gs
   -- \| arrivedToLocation (mileage gs) = update' gs
   | mileage gs > 2040 = output T.endGood
   | date gs > 266 = output T.endSlow
+  | not isNothing makeEvent = do
+    output (printLocation gs)
+    updateEvent gs (fromJust makeEvent)
   | otherwise = do
       output (printLocation gs)
       let (result, gs') = S.runState (runExceptT visitNewLocation) gs
       output T.option
       input <- inputb
       handleInput input gs'
+
+updateEvent :: GameState -> Event -> IO ()
+updateEvent gs event = do
+  output (eventHeader event)
+  mapM_ output (eventOutcomes event)
+
+handleOptions :: GameState -> IO ()
+handleOptions gs = undefined
 
 -- updateEvent :: GameState -> Event -> IO ()
 -- updateEvent gs event = do
@@ -87,20 +98,20 @@ update gs
 --   handleInput input gs'
 
 -- | We're not using this so far
-update' :: GameState -> IO ()
-update' gs = do
-  output ("You are in: " ++ show (locationFromRange (mileage gs)))
-  output T.townOptions
-  input <- inputb
-  case parseTownCommand input of
-    Just Travel -> do
-      let newGameState = S.runState (runExceptT (performActionM Travel)) gs
-      case newGameState of
-        (Left errMsg, _) -> output errMsg >> update gs
-        (Right _, updatedGameState) -> output "Traveling... \n" >> update updatedGameState
-    Just Status -> output (printGameState gs) >> update' gs
-    Just Quit -> output "Bye Bye!"
-    _ -> output "Invalid command, try again \n" >> update' gs
+-- update' :: GameState -> IO ()
+-- update' gs = do
+--   output ("You are in: " ++ show (locationFromRange (mileage gs)))
+--   output T.townOptions
+--   input <- inputb
+--   case parseTownCommand input of
+--     Just Travel -> do
+--       let newGameState = S.runState (runExceptT (performActionM Travel)) gs
+--       case newGameState of
+--         (Left errMsg, _) -> output errMsg >> update gs
+--         (Right _, updatedGameState) -> output "Traveling... \n" >> update updatedGameState
+--     Just Status -> output (printGameState gs) >> update' gs
+--     Just Quit -> output "Bye Bye!"
+--     _ -> output "Invalid command, try again \n" >> update' gs
 
 handleInput :: String -> GameState -> IO ()
 handleInput input gs =
