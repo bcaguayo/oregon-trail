@@ -3,7 +3,12 @@ module GameState where
 -- import Resources
 
 import Control.Monad.Except
-    ( foldM, ExceptT(..), MonadTrans(lift), MonadError(throwError), runExceptT )
+  ( ExceptT (..),
+    MonadError (throwError),
+    MonadTrans (lift),
+    foldM,
+    runExceptT,
+  )
 import Control.Monad.State
 import Data.Map (Map)
 import Data.Maybe (fromMaybe)
@@ -11,7 +16,7 @@ import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Type.Nat (Nat)
 import Events (Event (E), Modifier (M), Outcome (O))
-import Locations (Location, natToDate, initialVisitedSet, getLocation)
+import Locations (Location, getLocation, initialVisitedSet, natToDate)
 import Options
 import Resources
 import State as S
@@ -51,6 +56,7 @@ checkParameters date mileage pace =
   validDate date && validMileage mileage -- && validPace pace
 
 type GameStateM = ExceptT String (S.State GameState)
+
 -- ____________________________________________________________________
 
 validDate :: Nat -> Bool
@@ -297,11 +303,13 @@ applyOutcome r (O (_, ms)) = foldM applyModifier r ms
 
 applyEvent :: Nat -> Event -> Resources s -> ExceptT String (S.State GameState) (Resources s)
 applyEvent option event res = case event of
-  E (_, outcomeList) -> applyOutcome res outcome where
-    outcome = outcomeList !! fromIntegral option
-  -- case Map.lookup option (eventMap event) of
-  --   Just (O (_, ms)) -> applyModifiers res ms
-  --   Nothing -> res
+  E (_, outcomeList) -> applyOutcome res outcome
+    where
+      outcome = outcomeList !! fromIntegral option
+
+-- case Map.lookup option (eventMap event) of
+--   Just (O (_, ms)) -> applyModifiers res ms
+--   Nothing -> res
 
 getMoney :: GameState -> Nat
 getMoney gs = money (resources gs)
