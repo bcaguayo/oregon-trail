@@ -4,6 +4,7 @@ import Control.Monad.Except (ExceptT, runExceptT)
 import Data.Set qualified as Set
 import GameState
 import Locations
+import Options (Command (..))
 import Resources
 import State qualified as S
 import Test.HUnit
@@ -123,7 +124,7 @@ testAddFoodOnly = TestCase $ do
 testShopAction :: Test
 testShopAction = TestCase $ do
   let initial = initialGameState {resources = initialResources {money = 100}}
-  let (result, state') = S.runState (runExceptT (shopActionM' Food True 10)) initial
+  let (result, state') = S.runState (runExceptT (performActionM Shop)) initial
   case result of
     Left errMsg -> assertFailure $ "Error during shop action: " ++ errMsg
     Right _ -> do
@@ -147,7 +148,7 @@ testVisitNewLocation = TestCase $ do
   case result of
     Left errMsg -> assertFailure $ "Error during visiting new location: " ++ errMsg
     Right _ -> do
-      assertBool "MissouriRiver should be in visited set" (MissouriRiver `Set.member` visited state')
+      assertBool "MissouriRiver should be in visited set" (MissouriRiver `Set.member` visitedSet state')
 
 tests :: Test
 tests =

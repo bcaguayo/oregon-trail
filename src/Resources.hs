@@ -34,6 +34,15 @@ zeroResources = Resources {food = 0, clothes = 0, bullets = 0, oxen = 0, medicin
 initialResources :: Resources s
 initialResources = Resources {food = 0, clothes = 0, bullets = 0, oxen = 0, medicine = 0, wheels = 0, money = 700}
 
+addMoney :: Resources s -> Nat -> Resources s
+addMoney r n = r {money = money r + n}
+
+substractMoney :: Resources s -> Nat -> Resources s
+substractMoney r n =
+  if n > money r
+    then error "Insufficient funds"
+    else r {money = money r - n}
+
 addResources' :: Resources s -> ResourceType -> Nat -> Resources s
 addResources' r rtype n = case rtype of
   Food -> r {food = food r + n}
