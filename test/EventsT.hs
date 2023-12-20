@@ -102,22 +102,22 @@ testEventOutcomes = TestCase $ do
 -- Test to simulate applying a modifier to resources and verify the expected change
 testApplyModifier :: Test
 testApplyModifier = TestCase $ do
-  -- 初始化资源和生成修改器
+  -- Initialize resources and generate a modifier
   let initialResources = zeroResources
-  let modifier = genRandomModifier (mkStdGen 42) Food True 10 10 -- 增加 10 个食物单位
+  let modifier = genRandomModifier (mkStdGen 42) Food True 10 10 -- Increase food units by 10
 
-  -- 解包修改器
+  -- Unpack the modifier
   let M (resourceType, isAdd, amount) = modifier
 
-  -- 应用修改器并处理 ExceptT
+  -- Apply the modifier and handle ExceptT
   let updatedResult =
         if isAdd
           then Right (addResources' initialResources resourceType amount)
           else evalState (runExceptT $ substractResources initialResources resourceType amount) initialGameState
 
-  -- 测试结果
+  -- Test the result
   case updatedResult of
-    Left errMsg -> assertFailure errMsg -- 如果出错，则测试失败
+    Left errMsg -> assertFailure errMsg -- Fail the test if there's an error
     Right updatedResources -> assertEqual "Food amount should increase by 10" 10 (food updatedResources)
 
 tests :: Test

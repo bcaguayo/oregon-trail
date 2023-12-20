@@ -1,20 +1,21 @@
 module Locations where
 
-import Data.Type.Nat
-import Text as T
-import Options
-import qualified Data.Time.Calendar as Cal
 import Data.Maybe (fromMaybe)
 import Data.Set (Set)
-import qualified Data.Set as Set
+import Data.Set qualified as Set
+import Data.Time.Calendar qualified as Cal
+import Data.Type.Nat
+import Options
 import State as S
+import Text as T
 
--- LOCATIONS
+-- | Types of locations in the game.
 data LocationType = Town | Road deriving (Eq, Ord, Show)
 
-data Location = 
-    Independence 
-  | MissouriRiver 
+-- | Specific locations that can be visited in the game.
+data Location
+  = Independence
+  | MissouriRiver
   | FortKearney
   | FortLaramie
   | FortBridger
@@ -24,12 +25,14 @@ data Location =
   | Roadside
   deriving (Eq, Ord)
 
+-- | Get available commands based on the location type.
 getOptions :: LocationType -> [Command]
 getOptions Road = [Help, Status, Travel, Pace, Hunt, Quit]
 getOptions Town = [Help, Status, Travel, Rest, Shop, Quit]
 
 -- locationsToOptions :: String -> [Command]
 
+-- | Custom string representation for each location.
 instance Show Location where
   show Independence = "Independence, Missouri"
   show MissouriRiver = "Missouri River"
@@ -41,6 +44,7 @@ instance Show Location where
   show OregonCity = "Oregon City, Oregon"
   show Roadside = "The Road"
 
+-- | Determine the current location based on the mileage.
 locationFromRange :: Nat -> Location
 locationFromRange n
   | n >= 0 && n < 10 = Independence
@@ -53,36 +57,42 @@ locationFromRange n
   | n >= 2170 = OregonCity
   | otherwise = Roadside
 
+-- | Initial set of visited locations.
 initialVisitedSet :: Set Location
 initialVisitedSet = Set.fromList [Independence]
 
--- | Returns the next location and the updated location map
 -- getLocation :: Nat -> Set Location -> (Location, Set Location)
 -- getLocation n locs = if locationFromRange n `notElem` locs
 --   then (locationFromRange n, Set.insert (locationFromRange n) locs)
 --   else (Roadside, locs)
 
+-- | Returns the next location and the updated location map
 getLocation :: Nat -> Set Location -> Location
-getLocation n locs = if locationFromRange n `notElem` locs
-  then locationFromRange n
-  else Roadside
+getLocation n locs =
+  if locationFromRange n `notElem` locs
+    then locationFromRange n
+    else Roadside
 
 -- >>> getLocation 0 Set.empty
 -- (Independence, Missouri,fromList [Independence, Missouri])
 
 -- DATES
 
+-- | Display the date in a formatted string.
 showDate :: Int -> String
-showDate i = line ++ weekday ++ " " ++ day ++ "\n" ++ line where
-  line = "==================================================\n"
-  weekday = weekdays !! fromIntegral (weekdayOffset i)
-  day = natToDate i
+showDate i = line ++ weekday ++ " " ++ day ++ "\n" ++ line
+  where
+    line = "==================================================\n"
+    weekday = weekdays !! fromIntegral (weekdayOffset i)
+    day = natToDate i
 
 -- >>> showDate 266
 
+-- | Convert a numeric date to a formatted date string.
 natToDate :: Int -> String
-natToDate =  dateToStr . natToTouple
+natToDate = dateToStr . natToTouple
 
+-- | Helper function to split a numeric date into month and day.
 natToTouple :: Int -> (Int, Int)
 natToTouple n
   | n > 266 = error "Invalid date"
@@ -97,20 +107,22 @@ natToTouple n
   | n > 3 = (4, n - 3)
   | otherwise = (3, n)
 
+-- | Convert a numeric month to its string representation.
 showMonth :: Int -> String
 showMonth m = case m of
-    3 -> "MARCH"
-    4 -> "APRIL" 
-    5 -> "MAY"
-    6 -> "JUNE"
-    7 -> "JULY"
-    8 -> "AUGUST"
-    9 -> "SEPTEMBER"
-    10 -> "OCTOBER"
-    11 -> "NOVEMBER"
-    12 -> "DECEMBER"
-    _ -> error "Invalid date"
+  3 -> "MARCH"
+  4 -> "APRIL"
+  5 -> "MAY"
+  6 -> "JUNE"
+  7 -> "JULY"
+  8 -> "AUGUST"
+  9 -> "SEPTEMBER"
+  10 -> "OCTOBER"
+  11 -> "NOVEMBER"
+  12 -> "DECEMBER"
+  _ -> error "Invalid date"
 
+-- | Convert a month and day to a formatted date string.
 dateToStr :: (Int, Int) -> String
 dateToStr (month, day) = showMonth month ++ " " ++ show day ++ " 1847"
 

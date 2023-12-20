@@ -1,8 +1,9 @@
 module Options where
 
 import Data.Char (toLower)
-import qualified Resources as R (ResourceType (..))
+import Resources qualified as R (ResourceType (..))
 
+-- | Enumerated type for game commands.
 data Command
   = Help
   | Status
@@ -14,6 +15,7 @@ data Command
   | Quit
   deriving (Eq, Show)
 
+-- | Parse a string input into a Command, if possible.
 parseCommand :: String -> Maybe Command
 parseCommand input = case map toLower input of
   "help" -> Just Help
@@ -25,7 +27,7 @@ parseCommand input = case map toLower input of
   "pace" -> Just Pace
   _ -> Nothing
 
--- This is a version that handles Int Commands
+-- | Parses a string input into a Command based on integer input.
 parseInt :: String -> Maybe Command
 parseInt input = case map toLower input of
   "1" -> Just Travel
@@ -37,15 +39,18 @@ parseInt input = case map toLower input of
   "7" -> Just Quit
   _ -> Nothing
 
+-- | Special parser for commands available in a town location.
 parseTownCommand :: String -> Maybe Command
 parseTownCommand input = case map toLower input of
-    "1" -> Just Travel
-    "2" -> Just Status
-    "3" -> Just Quit
-    _ -> Nothing
+  "1" -> Just Travel
+  "2" -> Just Status
+  "3" -> Just Quit
+  _ -> Nothing
 
+-- | Enumerated type for professions in the game.
 data Profession = Banker | Carpenter | Farmer deriving (Eq, Show)
 
+-- | Parse a string input into a Profession, if possible.
 parseProfession :: String -> Maybe Profession
 parseProfession input = case map toLower input of
   "banker" -> Just Banker
@@ -53,6 +58,7 @@ parseProfession input = case map toLower input of
   "farmer" -> Just Farmer
   _ -> Nothing
 
+-- | Enumerated type for commands available in the shop.
 data ShopCommand
   = BuyFood
   | BuyClothes
@@ -63,6 +69,7 @@ data ShopCommand
   | Leave
   deriving (Eq, Show)
 
+-- | Parse a string input into a ResourceType for shopping, if possible.
 parseShopCommand :: String -> Maybe R.ResourceType
 parseShopCommand input = case input of
   "1" -> Just R.Food
