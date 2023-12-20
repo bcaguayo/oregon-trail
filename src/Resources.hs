@@ -2,6 +2,7 @@ module Resources where
 
 import Data.Map (Map)
 import Data.Type.Nat
+import Test.HUnit
 
 data ResourceType = Food | Clothes | Money | Bullets | Oxen | Medicine | Wheels deriving (Eq, Ord)
 
@@ -48,9 +49,9 @@ addMoney r n = r {money = money r + n}
 
 substractMoney :: Resources s -> Nat -> Resources s
 substractMoney r n =
-  if n > money r
-    then error "Insufficient funds"
-    else r {money = money r - n}
+  case minus (money r) n of
+    Just newAmount -> r {money = newAmount}
+    Nothing -> error "Insufficient funds"
 
 getResourceAmount :: Resources s -> ResourceType -> Nat
 getResourceAmount r rtype = case rtype of
@@ -76,3 +77,18 @@ natToRes 3 = Oxen
 natToRes 4 = Medicine
 natToRes 5 = Wheels
 natToRes _ = Money
+
+-- 测试在资金充足时正确减去金额
+testSubstractMoneySuccessfully :: Test
+testSubstractMoneySuccessfully = TestCase $ do
+  let initialResources = Resources {money = 100, clothes = 0, food = 0, bullets = 0, oxen = 0, medicine = 0, wheels = 0} -- 其他资源初始化
+  let amountToSubstract = 50
+  let updatedResources = substractMoney initialResources amountToSubstract
+  assertEqual "Should substract money correctly" 50 (money updatedResources)
+
+tests :: Test
+tests = TestList [testSubstractMoneySuccessfully]
+
+-- 执行测试
+runTests :: IO ()
+runTests = runTestTT tests >>= print
