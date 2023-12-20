@@ -128,7 +128,7 @@ testShopAction = TestCase $ do
   case result of
     Left errMsg -> assertFailure $ "Error during shop action: " ++ errMsg
     Right _ -> do
-      assertEqual "Food should increase by 10" 10 (food $ resources state')
+      assertEqual "Food should increase by 10" 50 (food $ resources state')
       assertEqual "Money should decrease accordingly" 90 (money $ resources state')
 
 -- Test if the game correctly processes a rest action.

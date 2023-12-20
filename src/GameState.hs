@@ -105,7 +105,7 @@ initialGameState =
       pace = Slow,
       marksmanship = Fair,
       health = Healthy,
-      resources = initialResources,
+      resources = carpenterResources,
       status = Playing,
       visitedSet = initialVisitedSet
     }
