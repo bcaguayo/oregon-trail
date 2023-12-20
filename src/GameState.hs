@@ -93,7 +93,7 @@ paceSlow = 95
 -- | Show instance for GameState.
 instance Show GameState where
   show gs =
-    "Status: { Date: "
+    "Status: {"
       ++ showDate (fromIntegral (date gs))
       ++ ", Mileage: "
       ++ show (mileage gs)
@@ -281,8 +281,8 @@ huntActionM = do
 
 -- | return travel distance
 travelDistance :: Pace -> Nat
-travelDistance Slow = 95 -- slow travel, for example 95  miles each time
-travelDistance Fast = 145 -- fast travel, for example 145 miles each time
+travelDistance Slow = paceSlow -- slow travel, for example 95  miles each time
+travelDistance Fast = paceFast -- fast travel, for example 145 miles each time
 
 -- | Update the date and mileage for the next day.
 nextDate :: GameState -> GameState

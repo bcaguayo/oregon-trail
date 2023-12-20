@@ -88,11 +88,15 @@ showDate i = line ++ weekday ++ " " ++ day ++ "\n" ++ line
 
 -- >>> showDate 266
 
+natToCal :: Int -> Cal.Day
+natToCal n = Cal.addDays (fromIntegral n) (Cal.fromGregorian 1847 1 1)
+
+-- >>> natToCal 266
+
 -- | Convert a numeric date to a formatted date string.
 natToDate :: Int -> String
-natToDate = dateToStr . natToTouple
+natToDate = show . natToCal
 
--- | Helper function to split a numeric date into month and day.
 natToTouple :: Int -> (Int, Int)
 natToTouple n
   | n > 266 = error "Invalid date"
@@ -105,22 +109,23 @@ natToTouple n
   | n > 65 = (6, n - 65)
   | n > 34 = (5, n - 34)
   | n > 3 = (4, n - 3)
-  | otherwise = (3, n)
+  | n == 0 = (3, 1)
+  | otherwise = error "Invalid date"
 
 -- | Convert a numeric month to its string representation.
 showMonth :: Int -> String
 showMonth m = case m of
-  3 -> "MARCH"
-  4 -> "APRIL"
-  5 -> "MAY"
-  6 -> "JUNE"
-  7 -> "JULY"
-  8 -> "AUGUST"
-  9 -> "SEPTEMBER"
-  10 -> "OCTOBER"
-  11 -> "NOVEMBER"
-  12 -> "DECEMBER"
-  _ -> error "Invalid date"
+  3 -> "March"
+  4 -> "April"
+  5 -> "May"
+  6 -> "June"
+  7 -> "July"
+  8 -> "August"
+  9 -> "September"
+  10 -> "October"
+  11 -> "November"
+  12 -> "December"
+  _ -> error "Invalid month"
 
 -- | Convert a month and day to a formatted date string.
 dateToStr :: (Int, Int) -> String

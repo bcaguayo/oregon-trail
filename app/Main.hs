@@ -5,7 +5,7 @@ import Control.Monad.Except
 -- | This module imports the 'State' module and qualifies it with the alias 'S'.
 import qualified State as S
 import qualified Text as T 
-import Resources (ResourceType(..), shopTile, resCost, Resources (food))
+import Resources (ResourceType(..), shopTile, resCost, Resources (food), recommended)
 import Data.Type.Nat
 import GHC.Base (undefined)
 import GameState
@@ -78,6 +78,14 @@ update gs
       input <- inputb
       handleInput input gs'
 
+-- updateEvent :: GameState -> Event -> IO ()
+-- updateEvent gs event = do
+--   output  event
+--   let (result, gs') = S.runState (runExceptT visitNewLocation) gs
+--   output T.option
+--   input <- inputb
+--   handleInput input gs'
+
 -- | We're not using this so far
 update' :: GameState -> IO ()
 update' gs = do
@@ -134,7 +142,9 @@ shopping gs rt = do
   let resName = shopTile rt
       resPrice = resCost rt
   -- | ask user how many of the resource they want to buy
-  output ("How many " ++ resName ++ " do you want to buy?")
+  output ("How many " ++ resName ++ " do you want to buy?, You have " ++ show (getMoney gs) ++ " dollars")
+  output ("Each " ++ resName ++ " costs " ++ show resPrice ++ " dollars")
+  output ("The recommended amount is " ++ show (recommended rt) ++ " " ++ resName ++ "\n")
   amount <- inputb  
   let natAmount = case readMaybe amount of
         Nothing -> 0
