@@ -3,7 +3,12 @@ module GameState where
 -- import Resources
 
 import Control.Monad.Except
-    ( foldM, ExceptT(..), MonadTrans(lift), MonadError(throwError), runExceptT )
+  ( ExceptT (..),
+    MonadError (throwError),
+    MonadTrans (lift),
+    foldM,
+    runExceptT,
+  )
 import Control.Monad.State
 import Data.Map (Map)
 import Data.Maybe (fromMaybe)
@@ -31,10 +36,13 @@ data Pace = Fast | Slow deriving (Show, Eq)
 
 data Marksmanship = Ace | Fair | Shaky deriving (Show, Eq)
 
+-- | Health status of the player.
 data HealthStatus = Healthy | Ill | Critical deriving (Show, Eq)
 
+-- | Current status of the game.
 data GameStatus = Playing | GameOver | GameEnd deriving (Show, Eq)
 
+-- | Main GameState data type.
 data GameState = GameState
   { date :: Nat,
     mileage :: Nat,
@@ -50,25 +58,30 @@ data GameState = GameState
 targetMileage :: Nat
 targetMileage = 2170
 
+-- | Check if the given date and mileage are valid.
 checkParameters :: Nat -> Nat -> Pace -> Bool
 checkParameters date mileage pace =
   validDate date && validMileage mileage -- && validPace pace
 
+-- | Monad for GameState transformations with error handling.
 type GameStateM = ExceptT String (S.State GameState)
--- ____________________________________________________________________
 
+-- | Validates the given date.
 validDate :: Nat -> Bool
 validDate date = date >= 1 && date <= 266
 
+-- | Validates the given mileage.
 validMileage :: Nat -> Bool
 validMileage mileage = mileage >= 0
 
+-- | Constants for pace in terms of mileage per day.
 paceFast :: Nat
 paceFast = 145
 
 paceSlow :: Nat
 paceSlow = 95
 
+-- | Show instance for GameState.
 instance Show GameState where
   show gs =
     "Status: { Date: "
@@ -83,7 +96,7 @@ instance Show GameState where
       ++ show (resources gs)
       ++ "\n"
 
--- START=
+-- | Initial GameState setup.
 initialGameState :: GameState
 initialGameState =
   GameState
@@ -165,6 +178,7 @@ updateGameStateM = do
   updateHealthM
   updateResourcesM
 
+-- | Update the health status based on current conditions.
 updateHealthM :: GameStateM ()
 updateHealthM = lift $ S.modify $ \gs ->
   let newHealth = case health gs of
@@ -182,11 +196,6 @@ isRecoveryConditionMet :: GameState -> Bool
 isRecoveryConditionMet gs = food (resources gs) > 50
 
 -- | update resources
--- updateResourcesM :: GameStateM ()
--- updateResourcesM = S.modify $ \gs ->
---   let currentResources = resources gs
---       foodConsumption = 5
---    in gs {resources = substractResources currentResources Food foodConsumption}
 updateResourcesM :: GameStateM ()
 updateResourcesM = do
   gs <- lift S.get
@@ -217,6 +226,7 @@ performActionM command = case command of
   Pace -> paceActionM
   Shop -> shopActionM'
 
+-- | Process travel action in the game.
 travelActionM :: GameStateM ()
 travelActionM = do
   gs <- lift S.get
@@ -225,11 +235,13 @@ travelActionM = do
   newResources <- substractResources (resources gs) Food 5
   lift $ S.put $ gs {date = updatedDate, resources = newResources, mileage = updatedMileage}
 
+-- | Process rest action in the game.
 restActionM :: GameStateM ()
 restActionM = lift $ S.modify $ \gs ->
   let improvedHealth = if health gs == Ill then Healthy else health gs
    in gs {health = improvedHealth}
 
+-- | Process shop action in the game.
 shopActionM' :: GameStateM ()
 shopActionM' = do
   gs <- lift S.get
@@ -241,6 +253,7 @@ shopActionM' = do
   updatedResources <- substractResources resourcesAfterAddingFood Money foodCost
   lift $ S.put $ gs {resources = updatedResources}
 
+-- | Process pace action in the game.
 paceActionM :: GameStateM ()
 paceActionM = lift $ S.modify $ \gs ->
   let updatedPace = case pace gs of
@@ -248,6 +261,7 @@ paceActionM = lift $ S.modify $ \gs ->
         Fast -> Slow
    in gs {pace = updatedPace}
 
+-- | Process hunt action in the game.
 huntActionM :: GameStateM ()
 huntActionM = do
   gs <- lift S.get
@@ -260,10 +274,11 @@ travelDistance :: Pace -> Nat
 travelDistance Slow = 95 -- slow travel, for example 95  miles each time
 travelDistance Fast = 145 -- fast travel, for example 145 miles each time
 
--- UPDATE
+-- | Update the date and mileage for the next day.
 nextDate :: GameState -> GameState
 nextDate gs = updateMileage gs {date = date gs + 14}
 
+-- | Update the mileage based on the pace.
 updateMileage :: GameState -> GameState
 updateMileage gs = case pace gs of
   Slow -> gs {mileage = mileage gs + 7}
@@ -271,7 +286,7 @@ updateMileage gs = case pace gs of
 
 -------------- | Resource Functions
 
--- Resource Functions
+-- | Resource manipulation functions
 addResources :: Resources s -> ResourceType -> Nat -> ExceptT String (S.State GameState) (Resources s)
 addResources r rt n = return $ -- assume a permanent success
   case rt of
@@ -310,7 +325,12 @@ substractResources r rtype n = case rtype of
 wallet :: GameState -> Int
 wallet gs = fromIntegral (money (resources gs))
 
+getMoney :: GameState -> Nat
+getMoney gs = money (resources gs)
+
 -------------- | Shop Functions
+
+-- | Shop function to modify resources based on player purchases.
 shopAction :: GameState -> ResourceType -> Nat -> GameState
 shopAction gs res amount = do
   let totalCost = amount * 10
@@ -319,19 +339,18 @@ shopAction gs res amount = do
   gs {resources = newResources'}
 
 -------------- | Event Functions
+
+-- | Apply a modifier to resources and return the updated resources.
 applyModifier :: Resources s -> Modifier -> ExceptT String (S.State GameState.GameState) (Resources s)
 applyModifier r (M (rt, b, n)) = if b then addResources r rt n else substractResources r rt n
 
+-- | Apply an outcome to resources and return the updated resources.
 applyOutcome :: Resources s -> Outcome -> ExceptT String (S.State GameState) (Resources s)
 applyOutcome r (O (_, ms)) = foldM applyModifier r ms
 
+-- | Apply an event based on the player's choice and return the updated resources.
 applyEvent :: Nat -> Event -> Resources s -> ExceptT String (S.State GameState) (Resources s)
 applyEvent option event res = case event of
-  E (_, outcomeList) -> applyOutcome res outcome where
-    outcome = outcomeList !! fromIntegral option
-  -- case Map.lookup option (eventMap event) of
-  --   Just (O (_, ms)) -> applyModifiers res ms
-  --   Nothing -> res
-
-getMoney :: GameState -> Nat
-getMoney gs = money (resources gs)
+  E (_, outcomeList) -> applyOutcome res outcome
+    where
+      outcome = outcomeList !! fromIntegral option
