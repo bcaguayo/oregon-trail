@@ -17,7 +17,7 @@ import System.Random (Random, RandomGen, mkStdGen, random, randomR)
 -- 3. A Nat, by how much
 newtype Modifier = M {modifier :: (ResourceType, Bool, Nat)} deriving (Eq, Ord)
 
--- | for example:
+-- | Examples of modifiers:
 keepFood :: Modifier
 keepFood = M (Food, True, 0)
 
@@ -27,6 +27,7 @@ keepClothes = M (Clothes, True, 0)
 keepMoney :: Modifier
 keepMoney = M (Money, True, 0)
 
+-- | Generates a random modifier with given parameters.
 genRandomModifier :: (RandomGen g) => g -> ResourceType -> Bool -> Nat -> Nat -> Modifier
 genRandomModifier gen rt isPos minAmount maxAmount = do
   let value = fst (randomR (fromIntegral minAmount, fromIntegral maxAmount) gen) :: Int
@@ -40,9 +41,9 @@ instance Show Modifier where
     where
       sign = if b then "+" else "-"
 
--- | An Outcome stores:
--- 1. A String to show in the options
--- 2. A set of modifiers to apply if the option is chosen
+-- | An Outcome represents the possible results of an event. It contains:
+-- 1. A description string.
+-- 2. A set of modifiers to apply if chosen.
 newtype Outcome = O {outcome :: (String, Set Modifier)} deriving (Eq)
 
 instance Show Outcome where
@@ -51,6 +52,7 @@ instance Show Outcome where
       then s ++ ": No effect"
       else s ++ ": " ++ intercalate ", " (map show (toList ms))
 
+-- Example outcomes:
 riverOutcomeGood :: Outcome
 riverOutcomeGood = O ("Look for a Bridge", Set.fromList [keepFood, keepClothes, keepMoney])
 
@@ -64,9 +66,9 @@ riverOutcomeBad = O ("Cross the River", fromList [f, c, o])
 huntingOutcome :: Outcome
 huntingOutcome = O ("Go Hunting", Set.fromList [genRandomModifier (mkStdGen 42) Food True 20 30])
 
--- Event is composed of:
--- 1. String describing the event
--- 2. A List of Outcomes
+-- | An Event represents a scenario in the game. It contains:
+-- 1. A description of the event.
+-- 2. A list of possible outcomes.
 newtype Event = E {event :: (String, [Outcome])} deriving (Eq)
 
 instance Ord Event where
@@ -78,7 +80,7 @@ instance Show Event where
 
 -- >>> show eventRiver
 
--- | Example:
+-- Examples of events:
 eventHunting :: Event
 eventHunting = E ("Hunting", [huntingOutcome])
 
@@ -98,21 +100,12 @@ eventRaiders = E ("A group of Raiders corner your wagon", raidersOutcomes)
     raiderOutcomeBad = O ("Run", fromList [modLoseFoodBad, modLoseClothes])
     raidersOutcomes = [raiderOutcomeGood, raiderOutcomeBad]
 
+-- | A set of all possible events.
 eventSet :: Set Event
 eventSet = Set.fromList [eventHunting, eventRiver, eventRaiders]
 
--- Choose a random event from the set
+-- | Generates a random event from the set of events.
 genRandomEvent :: (RandomGen g) => g -> Event
 genRandomEvent gen = do
   let (event, gen') = randomR (0, size eventSet) gen
   fromMaybe (E ("", [])) (lookup event (zip [0 ..] (toList eventSet)))
-
--- genRandomEvent :: RandomGen g => g -> Event
--- genRandomEvent gen = do
---     let (event, gen') = randomR (0, size eventSet) gen
---     fromMaybe (E ("", Map.empty)) (lookup value (zip [0..] (toList eventSet)))
-
--- eventRaiders :: Event
--- eventRaiders = E ("A group of Raiders corner your wagon", riverMod) where
---     gen = mkStdGen 42
---     riverMod = (keepFood, keepClothes, genRandomModifier gen Money 100)
