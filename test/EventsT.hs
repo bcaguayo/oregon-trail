@@ -3,7 +3,7 @@ module EventsT where
 import Data.Set (Set)
 import Data.Set qualified as Set
 import Events
-import GameState (applyEvent, applyOutcome, applyModifier, substractResources, addResources)
+import GameState (addResources, applyEvent, applyModifier, applyOutcome, substractResources)
 import Resources
 import System.Random (mkStdGen)
 import Test.HUnit
