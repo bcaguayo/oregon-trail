@@ -159,7 +159,7 @@ printGameState date mileage pace health resources =
 
 shopTiles :: [String]
 shopTiles = ["pounds of food", "sets of clothing", "boxes of bullets", 
-             "wagon wheels", "wagon axles", "wagon tongues"]
+             "oxen", "packs of medicine", "wagon wheels"]
 
 notEnough :: String
-notEnough = "You don't have enough money for that"
+notEnough = "You don't have enough money for this purchase"
