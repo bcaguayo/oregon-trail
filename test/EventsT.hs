@@ -2,8 +2,8 @@ module EventsT where
 
 import Data.Set (Set)
 import Data.Set qualified as Set
-import Events (genRandomEvent)
-import GameState (applyEvent)
+import Events
+import GameState (applyEvent, applyOutcome, applyModifier, substractResources, addResources)
 import Resources
 import System.Random (mkStdGen)
 import Test.HUnit
@@ -58,7 +58,7 @@ import Test.HUnit
 testEventDescription :: Test
 testEventDescription =
   TestCase $
-    assertEqual "Event description" "Hunting" (eventString eventHunting)
+    assertEqual "Event description" "Hunting" (show eventHunting)
 
 -- testEventDescription :: Test
 -- testEventDescription = TestCase $
@@ -67,9 +67,9 @@ testEventDescription =
 testEventOutcome :: Test
 testEventOutcome =
   TestCase $
-    let huntingResources = (M (Food, True, 10), keepClothes, keepMoney)
-     in let hunting = applyEvent zeroResources eventHunting
-         in assertEqual "Event Outcome" hunting (applyEvent zeroResources eventHunting)
+    let huntingMod = M (Food, True, 10)
+     in let hunting = applyModifier zeroResources huntingMod
+         in assertEqual "Event Outcome" hunting (applyModifier zeroResources huntingMod)
 
 -- testEventOutcome :: Test
 -- testEventOutcome = TestCase $
@@ -80,7 +80,7 @@ testEventOutcome =
 testEventToString :: Test
 testEventToString =
   TestCase $
-    assertEqual "Event to string" "Hunting: +10 food" (eventToString eventHunting)
+    assertEqual "Event to string" "Hunting: +10 food" (show eventHunting)
 
 -- testEventToString :: Test
 -- testEventToString = TestCase $
