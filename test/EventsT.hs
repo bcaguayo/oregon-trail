@@ -115,6 +115,53 @@ genRandomModifier gen res n =
     let (value, gen') = randomR (0, n) gen
         (isPositive, gen'') = random gen'
     in M (res, isPositive, fromIntegral value)
+
+{-
+If succesful shopping return new game state
+If not succesful shopping return error message "Not enought money"
+-}
+
+-- shopActionM' :: ResourceType -> Nat -> GameStateM ()
+-- shopActionM' resourceType amount = undefined
+  -- do
+  -- gs <- lift S.get -- Get the current game state.
+  -- let currentResources = resources gs
+
+  -- -- Calculate the cost of the transaction.
+  -- let cost = amount * 5 -- Assuming a unit cost of 5 for all resources.
+
+  -- -- Update resources based on whether the player is buying or selling.
+  -- updatedResources <- do
+  --       -- If buying, add the purchased resource.
+  --   let resourcesAfterAddition = addResources' currentResources resourceType amount
+
+  --   -- Try to subtract the equivalent amount of money.
+  --   eitherResult <- runExceptT $ substractResources resourcesAfterAddition Money cost
+  --   case eitherResult of
+  --     Left errMsg -> throwError errMsg -- Throw error if funds are insufficient.
+  --     Right newResources -> return newResources
+
+  -- -- Update the game state with the new resources.
+  -- lift $ S.put $ gs {resources = updatedResources}
+
+-- shopping :: GameState -> ResourceType -> Nat -> GameState
+-- shopping gs res amount = do
+--   let currentResources = resources gs
+--       totalCost = amount * 10
+--       newResources = 
+--         case addResources currentResources res amount of
+--           Left errMsg -> throwError errMsg
+--           Right updatedResources -> case runExceptT (substractResources updatedResources Money totalCost) of
+--             Left errMsg' -> throwError errMsg'
+--             Right updatedResources' -> updatedResources'
+
+  -- do
+  -- gs <- lift S.get
+  -- let (result, newGs) = runExceptT (shopActionM' res amount)
+  -- case result of
+  --   Left errMsg -> throwError errMsg
+  --   Right _ -> lift (S.put newGs)
+
 -}
 
 

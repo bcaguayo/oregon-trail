@@ -3,6 +3,7 @@ module GameState where
 -- import Resources
 
 import Control.Monad.Except
+    ( foldM, ExceptT(..), MonadTrans(lift), MonadError(throwError), runExceptT )
 import Control.Monad.State
 import Data.Map (Map)
 import Data.Maybe (fromMaybe)
@@ -10,7 +11,7 @@ import Data.Set (Set)
 import Data.Set qualified as Set
 import Data.Type.Nat (Nat)
 import Events (Event (E), Modifier (M), Outcome (O))
-import Locations
+import Locations (Location, natToDate, initialVisitedSet, getLocation)
 import Options
 import Resources
 import State as S
@@ -49,10 +50,7 @@ checkParameters :: Nat -> Nat -> Pace -> Bool
 checkParameters date mileage pace =
   validDate date && validMileage mileage -- && validPace pace
 
--- type GameStateM = Control.Monad.State.State GameState
--- type GameStateM = S.State GameState
 type GameStateM = ExceptT String (S.State GameState)
-
 -- ____________________________________________________________________
 
 validDate :: Nat -> Bool
@@ -91,8 +89,7 @@ initialGameState =
       health = Healthy,
       resources = initialResources,
       status = Playing,
-      visitedSet = initialVisitedSet,
-      visited = initialVisitedSet
+      visitedSet = initialVisitedSet
     }
 
 checkState :: GameState -> GameState
@@ -120,11 +117,11 @@ visitNewLocation :: GameStateM ()
 visitNewLocation = do
   gs <- lift S.get
   let currentMileage = mileage gs
-  let visitedLocations = visited gs -- Renamed local variable
+  let visitedLocations = visitedSet gs -- Renamed local variable
   let newLocation = getLocation currentMileage visitedLocations
   unless (newLocation `Set.member` visitedLocations) $ do
     let newVisited = Set.insert newLocation visitedLocations
-    lift $ S.put $ gs {visited = newVisited}
+    lift $ S.put $ gs {visitedSet = newVisited}
 
 -- | update game state
 updateGameStateM :: GameStateM ()
@@ -188,7 +185,7 @@ performActionM command = case command of
   Hunt -> huntActionM
   Rest -> restActionM
   Pace -> paceActionM
-  Shop -> return ()
+  Shop -> shopActionM'
 
 travelActionM :: GameStateM ()
 travelActionM = do
@@ -203,8 +200,8 @@ restActionM = lift $ S.modify $ \gs ->
   let improvedHealth = if health gs == Ill then Healthy else health gs
    in gs {health = improvedHealth}
 
-shopActionM :: GameStateM ()
-shopActionM = do
+shopActionM' :: GameStateM ()
+shopActionM' = do
   gs <- lift S.get
   let gainFood = 50
   let foodCost = 10
@@ -213,42 +210,6 @@ shopActionM = do
   -- Then, subtract money resources
   updatedResources <- substractResources resourcesAfterAddingFood Money foodCost
   lift $ S.put $ gs {resources = updatedResources}
-
--- shopActionM' :: ResourceType -> Bool -> Nat -> ExceptT String GameStateM ()
--- shopActionM' res pos amount = undefined
-shopActionM' :: ResourceType -> Bool -> Nat -> GameStateM ()
-shopActionM' resourceType isBuying amount = do
-  gs <- lift S.get -- Get the current game state.
-  let currentResources = resources gs
-
-  -- Calculate the cost of the transaction.
-  let cost = amount * 5 -- Assuming a unit cost of 5 for all resources.
-
-  -- Perform the resource update within the ExceptT monad.
-  updatedResources <-
-    if isBuying
-      then do
-        -- If buying, add the purchased resource.
-        let resourcesAfterAddition = addResources' currentResources resourceType amount
-
-        -- Subtract the equivalent amount of money.
-        substractResources resourcesAfterAddition Money cost
-      else do
-        -- Logic for selling resources.
-        case minus (getResourceAmount currentResources resourceType) amount of
-          Just n' -> return $ addResources' currentResources resourceType n'
-          Nothing -> throwError "Insufficient resources"
-
-  -- Apply the updated resources to the game state.
-  lift $ S.put $ gs {resources = updatedResources}
-
--- do
--- gs <- lift S.get
--- -- First, add food resources
--- let updatedResources = if pos
---           then addResources (resources gs) res amount
---           else substractResources (resources gs) res amount
--- lift $ S.put $ gs {resources = updatedResources}
 
 paceActionM :: GameStateM ()
 paceActionM = lift $ S.modify $ \gs ->
@@ -278,38 +239,7 @@ updateMileage gs = case pace gs of
   Slow -> gs {mileage = mileage gs + 7}
   Fast -> gs {mileage = mileage gs + 14}
 
--- update' :: GameState -> ShopCommand -> ((), GameState)
--- update' gs command =
---   case command of
---     Shop resourceType isBuying amount ->
---       let (result, newGs) = runExceptT (shopActionM' resourceType isBuying amount) gs
---        in case result of
---             Left errMsg -> ((), gs) -- handle erroe
---             Right _ -> ((), newGs) -- update game state
---     _ -> ((), gs) -- other command
-
--- update'' :: Resources a -> GameState -> (Resources a, GameState)
--- update'' = undefined
-
--- res10 = addResources initialResources Food 10
-
--- res5 = substractResources res10 Food 5
-
--- >>> res10
-
--- >>> res5
-
--- Debug.Trace
--- >>> :k TestCase
--- Not in scope: type constructor or class `TestCase'
-
--- test1 :: Test
--- test1 = TestCase $ assertBool True
-
--- runTestTT
-
--- >>> runTestTT testUpdateResources
--- Counts {cases = 1, tried = 1, errors = 0, failures = 0}
+-------------- | Resource Functions
 
 -- Resource Functions
 addResources :: Resources s -> ResourceType -> Nat -> ExceptT String (S.State GameState) (Resources s)
@@ -350,26 +280,15 @@ substractResources r rtype n = case rtype of
 wallet :: GameState -> Int
 wallet gs = fromIntegral (money (resources gs))
 
--- | Shop Functions
+-------------- | Shop Functions
+shopAction :: GameState -> ResourceType -> Nat -> GameState
+shopAction gs res amount = do
+  let totalCost = amount * 10
+      newResources = addResources' (resources gs) res amount
+      newResources' = substractResources' newResources Money totalCost
+  gs {resources = newResources'}
 
-{-
-If succesful shopping return new game state
-If not succesful shopping return error message "Not enought money"
--}
-shopping :: ResourceType -> Nat -> GameStateM ()
-shopping res amount = undefined
-
--- do
--- gs <- lift S.get
--- let (result, newGs) = runExceptT (shopActionM' res amount)
--- case result of
---   Left errMsg -> throwError errMsg
---   Right _ -> lift (S.put newGs)
-
-shop :: GameState -> ResourceType -> Nat -> GameState
-shop = undefined
-
--- | Event Functions
+-------------- | Event Functions
 applyModifier :: Resources s -> Modifier -> ExceptT String (S.State GameState.GameState) (Resources s)
 applyModifier r (M (rt, b, n)) = if b then addResources r rt n else substractResources r rt n
 
@@ -378,10 +297,11 @@ applyOutcome r (O (_, ms)) = foldM applyModifier r ms
 
 applyEvent :: Nat -> Event -> Resources s -> ExceptT String (S.State GameState) (Resources s)
 applyEvent option event res = case event of
-  E (_, outcomeList) -> applyOutcome res outcome
-    where
-      outcome = outcomeList !! fromIntegral option
+  E (_, outcomeList) -> applyOutcome res outcome where
+    outcome = outcomeList !! fromIntegral option
+  -- case Map.lookup option (eventMap event) of
+  --   Just (O (_, ms)) -> applyModifiers res ms
+  --   Nothing -> res
 
--- case Map.lookup option (eventMap event) of
---   Just (O (_, ms)) -> applyModifiers res ms
---   Nothing -> res
+getMoney :: GameState -> Nat
+getMoney gs = money (resources gs)

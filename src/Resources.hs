@@ -2,65 +2,67 @@ module Resources where
 
 import Data.Map (Map)
 import Data.Type.Nat
+import Data.Maybe (fromMaybe)
 
-data ResourceType = Food | Clothes | Money | Bullets | Oxen | Medicine | Wheels deriving (Eq, Ord)
+data ResourceType = Food | Clothes | Bullets | Oxen | Medicine | Wheels | Money deriving (Eq, Ord)
 
 instance Show ResourceType where
   show Food = "food"
   show Clothes = "clothes"
-  show Money = "money"
   show Bullets = "bullets"
   show Oxen = "oxen"
   show Medicine = "medicine"
   show Wheels = "wheels"
+  show Money = "money"
 
 type ResourcesM = Map ResourceType Nat
 
 data Resources s = Resources
   { food :: Nat,
     clothes :: Nat,
-    money :: Nat,
     bullets :: Nat,
     oxen :: Nat,
     medicine :: Nat,
-    wheels :: Nat
+    wheels :: Nat,
+    money :: Nat
   }
   deriving (Eq, Ord, Show)
 
 zeroResources :: Resources s
-zeroResources = Resources {food = 0, clothes = 0, money = 0, bullets = 0, oxen = 0, medicine = 0, wheels = 0}
+zeroResources = Resources {food = 0, clothes = 0, bullets = 0, oxen = 0, medicine = 0, wheels = 0, money = 0}
 
 initialResources :: Resources s
-initialResources = Resources {food = 0, clothes = 0, money = 700, bullets = 0, oxen = 0, medicine = 0, wheels = 0}
+initialResources = Resources {food = 0, clothes = 0, bullets = 0, oxen = 0, medicine = 0, wheels = 0, money = 700}
 
 addResources' :: Resources s -> ResourceType -> Nat -> Resources s
 addResources' r rtype n = case rtype of
   Food -> r {food = food r + n}
   Clothes -> r {clothes = clothes r + n}
-  Money -> r {money = money r + n}
   Bullets -> r {bullets = bullets r + n}
   Oxen -> r {oxen = oxen r + n}
   Medicine -> r {medicine = medicine r + n}
   Wheels -> r {wheels = wheels r + n}
+  Money -> r {money = money r + n}
 
-addMoney :: Resources s -> Nat -> Resources s
-addMoney r n = r {money = money r + n}
-
-substractMoney :: Resources s -> Nat -> Resources s
-substractMoney r n =
-  if n > money r
-    then error "Insufficient funds"
-    else r {money = money r - n}
+substractResources' :: Resources s -> ResourceType -> Nat -> Resources s
+substractResources' r rtype n = case rtype of
+  Food -> r {food = fromMaybe (food r) (food r `minus` n)}
+  Clothes -> r {clothes = fromMaybe (clothes r) (clothes r `minus` n)}
+  Bullets -> r {bullets = fromMaybe (bullets r) (bullets r `minus` n)}
+  Oxen -> r {oxen = fromMaybe (oxen r) (oxen r `minus` n)}
+  Medicine -> r {medicine = fromMaybe (medicine r) (medicine r `minus` n)}
+  Wheels -> r {wheels = fromMaybe (wheels r) (wheels r `minus` n)}
+  Money -> r {money = fromMaybe (money r) (money r `minus` n)}
 
 getResourceAmount :: Resources s -> ResourceType -> Nat
 getResourceAmount r rtype = case rtype of
   Food -> food r
   Clothes -> clothes r
-  Money -> money r
   Bullets -> bullets r
   Oxen -> oxen r
   Medicine -> medicine r
   Wheels -> wheels r
+  Money -> money r
 
 -- | utility for substraction
 minus :: Nat -> Nat -> Maybe Nat
@@ -76,3 +78,24 @@ natToRes 3 = Oxen
 natToRes 4 = Medicine
 natToRes 5 = Wheels
 natToRes _ = Money
+
+resCost :: ResourceType -> Nat
+resCost Food = 10
+resCost Clothes = 15
+resCost Bullets = 5
+resCost Oxen = 100
+resCost Medicine = 25
+resCost Wheels = 50
+resCost Money = 1
+
+shopTile :: ResourceType -> String
+shopTile Food = "pounds of food"
+shopTile Clothes = "sets of clothing"
+shopTile Bullets = "boxes of bullets"
+shopTile Oxen = "oxen"
+shopTile Medicine = "packs of medicine"
+shopTile Wheels = "wagon wheels"
+shopTile _ = "You can't buy that"
+
+shopNatToString :: Nat -> String
+shopNatToString n = shopTile (natToRes n)

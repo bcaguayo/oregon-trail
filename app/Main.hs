@@ -2,15 +2,16 @@ module Main where
 
 import Control.Monad.Cont (MonadIO (liftIO))
 import Control.Monad.Except
+-- | This module imports the 'State' module and qualifies it with the alias 'S'.
+import qualified State as S
+import StateMonad
+import qualified Text as T
+import Resources (ResourceType(..), shopTile, resCost)
 import Data.Type.Nat
 import GHC.Base (undefined)
-import GameState (shopActionM')
+import GameState
 import Locations
 import Options
-import Resources (ResourceType (Food))
-import State qualified as S
-import StateMonad
-import Text qualified as T
 import Trace
 
 {-
@@ -84,7 +85,7 @@ handleInput input gs =
           output "Traveling... \n" >> update (nextDate updatedGameState)
     Just Status -> output (printGameState gs) >> update gs
     Just Shop -> do
-      let newGameState = S.runState (runExceptT (shopActionM' Food 10)) gs
+      let newGameState = S.runState (runExceptT (performActionM Shop)) gs
       case newGameState of
         (Left errMsg, _) -> output errMsg >> update gs
         (Right _, updatedGameState) ->
@@ -149,18 +150,47 @@ printGameState gs = T.printGameState d m p h r
 --   -- newGameState <- S.runState (runExceptT (performActionM (Shop food clothes))) gs
 --   output (printGameState initialGameState)
 
+-- | For each resource we need, shop tile and cost per unit
+shopping :: GameState -> ResourceType -> IO ()
+shopping gs rt = do
+  -- | get components according to resource type
+  let resName = shopTile rt
+      resPrice = resCost rt
+  -- | ask user how many of the resource they want to buy
+  output ("How many " ++ resName ++ " do you want to buy?")
+  amount <- inputb
+  let natAmount = fromIntegral (read amount :: Int) :: Nat
+  -- | if they don't have enough money, throw error
+  if natAmount * 10 > getMoney gs
+    then output T.notEnough
+    -- | otherwise, update game state
+    else do
+      let newGameState = shopAction gs Food natAmount
+      output ("You have bought " ++ show natAmount ++ " " ++ resName ++  " \n") 
+      -- >> shopEval newGameState
+      
 -- go over this again
 shopFood :: GameState -> IO ()
 shopFood gs = do
   output "How many pounds of food do you want to buy?"
   food <- inputb
-  -- Parse an int from food
-  let readInt = read food :: Int
-  let natFood = fromIntegral readInt :: Nat
-  let shoppingResult = S.runState (runExceptT (shopActionM' Food natFood)) gs
-  case shoppingResult of
-    (Left errMsg, _) -> output errMsg >> shopFood gs
-    (Right _, updatedGameState) -> output "You have bought some food \n" >> shopClothes updatedGameState
+  let natFood = fromIntegral (read food :: Int) :: Nat
+  if natFood * 10 > getMoney gs
+    then output T.notEnough
+    else do
+      let newGameState = shopAction gs Food natFood
+      output "You have bought some food \n" >> shopClothes gs 
+
+-- let shoppingResult =  S.runState (runExceptT (shopActionM' Food natFood)) gs
+-- case shoppingResult of
+--   (Left errMsg, _) -> output errMsg >> shopFood gs
+--   (Right _, updatedGameState) -> output "You have bought some food \n" >> shopClothes updatedGameState
 
 shopClothes :: GameState -> IO ()
 shopClothes gs = undefined
+
+-- | At the beggining of the game, call all functions sequentially
+shopInitial :: GameState -> IO ()
+shopInitial gs = shopping gs Food
+
+-- | If choosing the Shop option, call shop individually
