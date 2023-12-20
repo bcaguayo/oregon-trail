@@ -151,7 +151,7 @@ printGameState gs = T.printGameState d m p h r
 --   output (printGameState initialGameState)
 
 -- | For each resource we need, shop tile and cost per unit
-shopping :: GameState -> ResourceType -> IO ()
+
 shopping gs rt = do
   -- | get components according to resource type
   let resName = shopTile rt
@@ -162,35 +162,25 @@ shopping gs rt = do
   let natAmount = fromIntegral (read amount :: Int) :: Nat
   -- | if they don't have enough money, throw error
   if natAmount * 10 > getMoney gs
-    then output T.notEnough
+    then output T.notEnough >> return gs
     -- | otherwise, update game state
     else do
       let newGameState = shopAction gs Food natAmount
-      output ("You have bought " ++ show natAmount ++ " " ++ resName ++  " \n") 
-      -- >> shopEval newGameState
-      
--- go over this again
-shopFood :: GameState -> IO ()
-shopFood gs = do
-  output "How many pounds of food do you want to buy?"
-  food <- inputb
-  let natFood = fromIntegral (read food :: Int) :: Nat
-  if natFood * 10 > getMoney gs
-    then output T.notEnough
-    else do
-      let newGameState = shopAction gs Food natFood
-      output "You have bought some food \n" >> shopClothes gs 
-
--- let shoppingResult =  S.runState (runExceptT (shopActionM' Food natFood)) gs
--- case shoppingResult of
---   (Left errMsg, _) -> output errMsg >> shopFood gs
---   (Right _, updatedGameState) -> output "You have bought some food \n" >> shopClothes updatedGameState
-
-shopClothes :: GameState -> IO ()
-shopClothes gs = undefined
+      output ("You have bought " ++ show natAmount ++ " " ++ resName ++  " \n") >> return newGameState
 
 -- | At the beggining of the game, call all functions sequentially
-shopInitial :: GameState -> IO ()
-shopInitial gs = shopping gs Food
+shopInitial gs = do
+  gsOne <- shopping gs Food
+  gsTwo <- shopping gsOne Clothes
+  gsThree <- shopping gsTwo Bullets
+  gsFour <- shopping gsThree Oxen
+  gsFive <- shopping gsFour Medicine
+  shopping gsFive Wheels
 
 -- | If choosing the Shop option, call shop individually
+shopOption gs = do
+  output T.shopOptions
+  input <- inputb
+  case parseShopCommand input of
+    Just rt -> shopping gs rt
+    Nothing -> output "Invalid command, try again" >> shopOption gs

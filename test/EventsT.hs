@@ -2,8 +2,8 @@ module EventsT where
 
 import Data.Set (Set)
 import Data.Set qualified as Set
-import Events (genRandomEvent)
-import GameState (applyEvent)
+import Events
+import GameState (addResources, applyEvent, applyModifier, applyOutcome, substractResources)
 import Resources
 import System.Random (mkStdGen)
 import Test.HUnit
@@ -55,15 +55,32 @@ import Test.HUnit
 -- eventHunting :: Event
 -- eventHunting = E ("Hunting", (M (Food, True, 10), keepClothes, keepMoney))
 
+testEventDescription :: Test
+testEventDescription =
+  TestCase $
+    assertEqual "Event description" "Hunting" (show eventHunting)
+
 -- testEventDescription :: Test
 -- testEventDescription = TestCase $
 --     assertEqual "Event description" "Hunting" (show eventHunting)
+
+testEventOutcome :: Test
+testEventOutcome =
+  TestCase $
+    let huntingMod = M (Food, True, 10)
+     in let hunting = applyModifier zeroResources huntingMod
+         in assertEqual "Event Outcome" hunting (applyModifier zeroResources huntingMod)
 
 -- testEventOutcome :: Test
 -- testEventOutcome = TestCase $
 --     let huntingResources = (M (Food, True, 10), keepClothes, keepMoney) in
 --     let hunting = applyEvent 0 eventHunting zeroResources in
 --     assertEqual "Event Outcome" hunting (applyEvent 0 eventHunting zeroResources)
+
+testEventToString :: Test
+testEventToString =
+  TestCase $
+    assertEqual "Event to string" "Hunting: +10 food" (show eventHunting)
 
 -- testEventToString :: Test
 -- testEventToString = TestCase $
@@ -219,6 +236,10 @@ If not succesful shopping return error message "Not enought money"
   --   Left errMsg -> throwError errMsg
   --   Right _ -> lift (S.put newGs)
 
+-- let shoppingResult =  S.runState (runExceptT (shopActionM' Food natFood)) gs
+-- case shoppingResult of
+--   (Left errMsg, _) -> output errMsg >> shopFood gs
+--   (Right _, updatedGameState) -> output "You have bought some food \n" >> shopClothes updatedGameState
 -}
 
 -- Generate a random event
