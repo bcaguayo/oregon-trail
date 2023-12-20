@@ -4,8 +4,9 @@ import Control.Monad.Except (ExceptT, runExceptT)
 import Data.Set qualified as Set
 import GameState
 import Locations
-import Options (Command (..))
+import Options (Command (..), Profession (..))
 import Resources
+import Data.List (isInfixOf)
 import State qualified as S
 import Test.HUnit
   ( Test (TestCase, TestList),
@@ -53,16 +54,6 @@ testTravelAction = TestCase $ do
     Left errMsg -> assertFailure $ "Error during travel action: " ++ errMsg
     Right _ -> assertEqual "Slow travel should increase mileage by 10" 95 (mileage state')
 
--- -- Test if the hunt action correctly increases the food resource.
--- testHuntAction :: Test
--- testHuntAction = TestCase $ do
---   let initial = initialGameState {resources = initialResources {food = 0}}
---   let (result, state') = S.runState (runExceptT shopActionM) initial
---   case result of
---     Left errMsg -> assertFailure $ "Error during hunt action: " ++ errMsg
---     Right _ -> assertEqual "Hunting should increase food by 50" 50 (food (resources state'))
-
--- Test if the game ends when the mileage reaches the target.
 testGameEndMileage :: Test
 testGameEndMileage = TestCase $ do
   let state = initialGameState {mileage = targetMileage}
@@ -150,6 +141,74 @@ testVisitNewLocation = TestCase $ do
     Right _ -> do
       assertBool "MissouriRiver should be in visited set" (MissouriRiver `Set.member` visitedSet state')
 
+-- Test if changing the marksmanship status updates correctly without affecting other state elements.
+testUpdateMarksmanship :: Test
+testUpdateMarksmanship = TestCase $ do
+  let initial = initialGameState {marksmanship = Ace}
+  let newState = setTrack Farmer -- Assuming Farmer has Ace marksmanship
+  case newState of
+    Just state' -> do
+      assertEqual "Marksmanship should be Ace for Farmer" Ace (marksmanship state')
+      -- Ensure other state elements remain unchanged
+      assertEqual "Health should remain unchanged" (health initial) (health state')
+      assertEqual "Mileage should remain unchanged" (mileage initial) (mileage state')
+    Nothing -> assertFailure "Failed to update marksmanship"
+
+-- Test if the wallet function returns the correct amount of money.
+testWalletFunction :: Test
+testWalletFunction = TestCase $ do
+  let state = initialGameState {resources = initialResources {money = 700}}
+  assertEqual "Wallet should return correct amount of money" 700 (wallet state)
+
+-- Test if setting a profession updates resources and marksmanship.
+testSetProfession :: Test
+testSetProfession = TestCase $ do
+  let newState = setTrack Banker -- Assuming Banker has specific resources and marksmanship
+  case newState of
+    Just state' -> do
+      -- Assert specific resources and marksmanship for Banker
+      let expectedResources = bankerResources
+      let expectedMarksmanship = Shaky
+      assertEqual "Expected resources for Banker" expectedResources (resources state')
+      assertEqual "Expected marksmanship for Banker" expectedMarksmanship (marksmanship state')
+    Nothing -> assertFailure "Failed to set profession"
+
+-- Test if the player's location is correctly updated and displayed.
+testPrintLocation :: Test
+testPrintLocation = TestCase $ do
+  let state = initialGameState {mileage = 10} -- Mileage corresponding to a specific location
+  let locationString = printLocation state
+  assertBool "Location string should contain the correct location name" ("Missouri River" `isInfixOf` locationString)
+
+-- Test if the game state correctly updates the date and mileage at fast pace.
+testUpdateGameStateFastPace :: Test
+testUpdateGameStateFastPace = TestCase $ do
+  let state = initialGameState {date = 1, mileage = 100, pace = Fast, resources = initialResources {food = 10}}
+  let (result, state') = S.runState (runExceptT updateGameStateM) state
+  case result of
+    Left errMsg -> assertFailure $ "Error during state update at Fast pace: " ++ errMsg
+    Right _ -> do
+      assertEqual "Date should increase by 1" 2 (date state')
+      assertEqual "Mileage should increase by 145 for Fast pace" 245 (mileage state')
+
+-- Test if the game ends when the money resource is depleted.
+testGameEndNoMoney :: Test
+testGameEndNoMoney = TestCase $ do
+  let state = initialGameState {resources = initialResources {money = 0}}
+  let (result, isEnd) = S.runState (runExceptT isGameEndM) state
+  case result of
+    Left errMsg -> assertFailure $ "Error during game end money check: " ++ errMsg
+    Right end -> assertBool "Game should end when money is depleted" end
+
+-- Test if the rest action does not change health status when already healthy.
+testRestActionHealthy :: Test
+testRestActionHealthy = TestCase $ do
+  let initial = initialGameState {health = Healthy}
+  let (result, state') = S.runState (runExceptT restActionM) initial
+  case result of
+    Left errMsg -> assertFailure $ "Error during rest action when healthy: " ++ errMsg
+    Right _ -> assertEqual "Health should remain Healthy after rest" Healthy (health state')
+
 tests :: Test
 tests =
   TestList
@@ -164,7 +223,14 @@ tests =
       testAddFoodOnly,
       testShopAction,
       testRestAction,
-      testVisitNewLocation
+      testVisitNewLocation,
+      testUpdateMarksmanship,
+      testWalletFunction,
+      testSetProfession,
+      testPrintLocation,
+      testUpdateGameStateFastPace,
+      testGameEndNoMoney,
+      testRestActionHealthy
     ]
 
 runTest :: IO ()

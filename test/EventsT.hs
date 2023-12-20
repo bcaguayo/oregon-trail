@@ -120,13 +120,53 @@ testApplyModifier = TestCase $ do
     Left errMsg -> assertFailure errMsg -- Fail the test if there's an error
     Right updatedResources -> assertEqual "Food amount should increase by 10" 10 (food updatedResources)
 
+-- Test to ensure that a random event is correctly generated from the set of events
+testEventDescription :: Test
+testEventDescription = TestCase $ do
+  let huntingDescription = show $ event eventHunting
+  assertEqual "Event description for Hunting" "(\"Hunting\",[Go Hunting: +20 food])" huntingDescription
+
+  let riverDescription = show $ event eventRiver
+  assertEqual "Event description for River" "(\"You Found A River\",[Look for a Bridge: , , ,Cross the River: -5 food, -5 clothes, ])" riverDescription
+
+-- Test to ensure that a random event is correctly generated from the set of events
+testEventOutcome :: Test
+testEventOutcome = TestCase $ do
+  let initialResources = zeroResources
+  let (E (_, outcomes)) = eventHunting
+  let outcomeHunting = head outcomes
+  let (O (_, mods)) = outcomeHunting
+  let modifier = head (Set.toList mods)
+  let updatedResources = evalState (runExceptT $ applyModifier initialResources modifier) initialGameState
+  case updatedResources of
+    Left errMsg -> assertFailure errMsg
+    Right res -> assertBool "Resource should increase after hunting" (food res > 0)
+
+-- Test to ensure that a random event is correctly generated from the set of events
+testRiverEventOutcome :: Test
+testRiverEventOutcome = TestCase $ do
+  let initialResources = zeroResources
+  let (E (_, outcomes)) = eventRiver
+  let outcomeRiver = head outcomes -- Look for a bridge 
+  let (O (_, mods)) = outcomeRiver
+  let modifier = head (Set.toList mods)
+  let updatedResources = evalState (runExceptT $ applyModifier initialResources modifier) initialGameState
+  case updatedResources of
+    Left errMsg -> assertFailure errMsg
+    Right res -> assertBool "Resource should change after river event" (clothes res > 0 || oxen res > 0)
+
+
+
 tests :: Test
 tests =
   TestList
     [ testRandomEventGeneration,
       testRandomModifierGeneration,
       testEventOutcomes,
-      testApplyModifier
+      testApplyModifier,
+      testEventDescription,
+      testEventOutcome,
+      testRiverEventOutcome
     ]
 
 -- END: Event tests

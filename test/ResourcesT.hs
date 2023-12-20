@@ -1,4 +1,3 @@
--- implement QC
 module ResourcesT where
 
 import Control.Exception (SomeException, evaluate, try)
