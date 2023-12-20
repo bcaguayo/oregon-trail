@@ -3,7 +3,7 @@ module Events where
 import Control.Monad.Except (ExceptT, runExceptT)
 import Data.List (intercalate)
 import Data.Maybe (fromMaybe)
-import Data.Set as Set (Set, fromList, size, toList)
+import Data.Set as Set (Set, fromList, size, toList, empty)
 import Data.Type.Nat
 import Resources
   ( ResourceType (Clothes, Food, Medicine, Money, Oxen, Wheels),
@@ -54,16 +54,23 @@ instance Show Outcome where
       then s ++ ": No effect"
       else s ++ ": " ++ intercalate ", " (map show (toList ms))
 
+-- >>> riverOutcomeGood
+-- Look for a Bridge: -41 money
+
+-- >>> riverOutcomeBad
+-- Cross the River: -5 food, -5 clothes, -1 oxen
+
 -- Example outcomes:
 riverOutcomeGood :: Outcome
-riverOutcomeGood = O ("Look for a Bridge", Set.fromList [keepFood, keepClothes, keepMoney])
+riverOutcomeGood = O ("Look for a Bridge", Set.fromList [m]) where
+  m = genRandomModifier (mkStdGen 42) Money False 25 50
 
 riverOutcomeBad :: Outcome
 riverOutcomeBad = O ("Cross the River", fromList [f, c, o])
   where
     f = genRandomModifier (mkStdGen 42) Food False 5 20
     c = genRandomModifier (mkStdGen 42) Clothes False 5 20
-    o = genRandomModifier (mkStdGen 42) Oxen False 0 1
+    o = genRandomModifier (mkStdGen 42) Oxen False 1 1
 
 huntingOutcome :: Outcome
 huntingOutcome = O ("Go Hunting", Set.fromList [genRandomModifier (mkStdGen 42) Food True 20 30])
@@ -80,7 +87,11 @@ instance Ord Event where
 instance Show Event where
   show (E (s, os)) = s ++ "\n" ++ intercalate "\n" (map show os)
 
+eventHeader :: Event -> String
+eventHeader (E (s, _)) = s
+
 -- >>> show eventRiver
+-- "You Found A River\nLook for a Bridge: -41 money\nCross the River: -5 food, -5 clothes, -1 oxen"
 
 -- Examples of events:
 eventHunting :: Event

@@ -114,7 +114,7 @@ resCost :: ResourceType -> Nat
 resCost Food = 2
 resCost Clothes = 15
 resCost Bullets = 5
-resCost Oxen = 100
+resCost Oxen = 50
 resCost Medicine = 25
 resCost Wheels = 50
 resCost Money = 1
@@ -132,3 +132,23 @@ shopTile _ = "You can't buy that"
 -- | Convert a `Nat` value to its corresponding shop string representation.
 shopNatToString :: Nat -> String
 shopNatToString n = shopTile (natToRes n)
+
+recommended :: ResourceType -> Nat
+recommended Food = 100
+recommended Clothes = 2
+recommended Bullets = 5
+recommended Oxen = 3
+recommended Medicine = 2
+recommended Wheels = 2
+recommended _ = 0
+
+{-
+Make sure carpenter can afford recommended
+Food: 100 * 2 = 200
+Clothes: 2 * 15 = 30
+Bullets: 5 * 5 = 25
+Oxen: 3 * 50 = 150
+Medicine: 2 * 25 = 50
+Wheels: 2 * 50 = 100
+Total: 555
+-}
