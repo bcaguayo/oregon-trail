@@ -44,8 +44,10 @@ play = do
     _ -> output "Invalid command, try again" >> play
   -- Choose your Profession
   output T.professions >> inputb >>= output . ("You have chosen: " ++)
+  -- Choose what to buy
+  gs <- shopInitial initialGameState
   -- Play Game
-  update initialGameState
+  update gs
 
 -- | This Game Loop is Cassia Approved
 update :: GameState -> IO ()
@@ -59,6 +61,7 @@ update gs
       input <- inputb
       handleInput input gs
 
+-- | We're not using this so far
 update' :: GameState -> IO ()
 update' gs = do
   output ("You are in: " ++ show (locationFromRange (mileage gs)))
@@ -126,32 +129,7 @@ printGameState gs = T.printGameState d m p h r
     h = show (health gs)
     r = show (resources gs)
 
--- shopping :: GameState -> IO ()
--- shopping gs = do
---   output "How many pounds of food do you want to buy?"
---   food <- inputb
---   if food * 10 > getMoney gs
---     then output "You don't have enough money to buy that much food"
---     else do
---       output "How many sets of clothes do you want to buy?"
---       clothes <- inputb
---       if clothes * 10 > money (resources gs) - food * 10
---         then output "You don't have enough money to buy that much clothes"
---         else do
---           let newResources = addResources (resources gs) Food (food * 10)
---           let newResources' = addResources newResources Clothes (clothes * 10)
---           let newGameState = gs {resources = newResources'}
---           output (printGameState newGameState)
---           update newGameState
---   -- if food less than cash, throw error
---   output "How many sets of clothes do you want to buy?"
---   clothes <- inputb
---   -- if clothes less than cash - food, throw error
---   -- newGameState <- S.runState (runExceptT (performActionM (Shop food clothes))) gs
---   output (printGameState initialGameState)
-
 -- | For each resource we need, shop tile and cost per unit
-
 shopping gs rt = do
   -- | get components according to resource type
   let resName = shopTile rt
@@ -182,5 +160,5 @@ shopOption gs = do
   output T.shopOptions
   input <- inputb
   case parseShopCommand input of
-    Just rt -> shopping gs rt
+    Just rt -> shopping gs rt >>= shopOption
     Nothing -> output "Invalid command, try again" >> shopOption gs
