@@ -1,4 +1,3 @@
-@ -1,122 +0,0 @@
 module Trace where
 
 import Control.Monad (ap, liftM, (>=>))

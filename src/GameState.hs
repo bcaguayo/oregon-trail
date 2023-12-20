@@ -351,7 +351,7 @@ shopAction gs res amount = do
 -------------- | Event Functions
 
 -- | Apply a modifier to resources and return the updated resources.
-applyModifier :: Resources s -> Modifier -> ExceptT String (S.State GameState.GameState) (Resources s)
+applyModifier :: Resources s -> Modifier -> GameStateM (Resources s)
 applyModifier r (M (rt, b, n)) = if b then addResources r rt n else substractResources r rt n
 
 -- | Apply an outcome to resources and return the updated resources.

@@ -13,7 +13,8 @@ import Locations
 import Options
 import Trace
 import Text.Read (readMaybe)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, isNothing)
+import Events (Event, eventHeader, eventOutcomes, makeEvent)
 
 {-
 Basic Functionality:
@@ -71,7 +72,7 @@ update gs
   -- \| arrivedToLocation (mileage gs) = update' gs
   | mileage gs > 2040 = output T.endGood
   | date gs > 266 = output T.endSlow
-  | not isNothing makeEvent = do
+  | not (isNothing makeEvent) = do
     output (printLocation gs)
     updateEvent gs (fromJust makeEvent)
   | otherwise = do
@@ -84,10 +85,14 @@ update gs
 updateEvent :: GameState -> Event -> IO ()
 updateEvent gs event = do
   output (eventHeader event)
-  mapM_ output (eventOutcomes event)
-
-handleOptions :: GameState -> IO ()
-handleOptions gs = undefined
+  mapM_ (output . show) (eventOutcomes event)
+  let numOutcomes = length (eventOutcomes event)
+  input <- inputb
+  let i = read input :: Int
+  if i > 0 && i <= numOutcomes then 
+    let result = applyEvent (fromIntegral i) event (resources gs) in
+    update gs
+  else output "Invalid input, try again" >> updateEvent gs event
 
 -- updateEvent :: GameState -> Event -> IO ()
 -- updateEvent gs event = do

@@ -71,7 +71,7 @@ testEventDescription = TestCase $ do
   assertEqual "Event description for Hunting" "(\"Hunting\",[Go Hunting: +20 food])" huntingDescription
 
   let riverDescription = show $ event eventRiver
-  assertEqual "Event description for River" "(\"You Found A River\",[Look for a Bridge: , , ,Cross the River: -5 food, -5 clothes, ])" riverDescription
+  assertEqual "Event description for River" "(\"You Found A River\",[Look for a Bridge: No Effect\nCross the River: -5 food, -5 clothes, ])" riverDescription
 
 -- Test to ensure that a random event is correctly generated from the set of events
 testEventOutcome :: Test

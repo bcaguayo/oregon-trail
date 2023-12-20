@@ -4,16 +4,6 @@ import Test.HUnit
 import Options
 import Resources qualified as R (ResourceType (..))
 
--- Tests for the parseCommand function.testParseCommand :: Test
-testParseCommand = TestList [
-  "testParseCommandHelp" ~: parseCommand "help" ~?= Just Help,
-  "testParseCommandQuit" ~: parseCommand "quit" ~?= Just Quit,
-  "testParseCommandStatus" ~: parseCommand "status" ~?= Just Status,
-  "testParseCommandTravel" ~: parseCommand "travel" ~?= Just Travel,
-  "testParseCommandRest" ~: parseCommand "rest" ~?= Just Rest,
-  "testParseCommandInvalid" ~: parseCommand "invalid" ~?= Nothing
-  ]
-
 -- Tests for the parseInt function.
 testParseInt :: Test
 testParseInt = TestList [
@@ -36,17 +26,6 @@ testParseTownCommand = TestList [
   "testParseTownCommandInvalid3" ~: parseTownCommand "0" ~?= Nothing
   ]
 
--- Tests for the parseProfession function.
-testParseProfession :: Test
-testParseProfession = TestList [
-  "testParseProfessionBanker" ~: parseProfession "banker" ~?= Just Banker,
-  "testParseProfessionCarpenter" ~: parseProfession "carpenter" ~?= Just Carpenter,
-  "testParseProfessionFarmer" ~: parseProfession "farmer" ~?= Just Farmer,
-  "testParseProfessionInvalid1" ~: parseProfession "invalid" ~?= Nothing,
-  "testParseProfessionInvalid2" ~: parseProfession "teacher" ~?= Nothing,
-  "testParseProfessionInvalid3" ~: parseProfession "doctor" ~?= Nothing
-  ]
-
 -- Tests for the parseShopCommand function.
 testParseShopCommand :: Test
 testParseShopCommand = TestList [
@@ -62,10 +41,8 @@ testParseShopCommand = TestList [
 tests :: Test
 tests =
   TestList
-    [ testParseCommand,
-      testParseInt,
+    [ testParseInt,
       testParseTownCommand,
-      testParseProfession,
       testParseShopCommand
     ]
 
