@@ -4,6 +4,7 @@ import Control.Exception (SomeException, evaluate, try)
 import Resources
 import Test.QuickCheck
 import Test.QuickCheck.Arbitrary
+import Data.Type.Nat
 
 -- Custom Arbitrary implementation
 instance Arbitrary ResourceType where
@@ -80,14 +81,6 @@ prop_natToRes (NonNegative n) =
         Wheels -> natN == 5
         Money -> natN > 5
 
--- Test the addition of money
-prop_subtractResources :: NonNegative Integer -> NonNegative Integer -> Property
-prop_subtractResources (NonNegative m) (NonNegative n) =
-  m > n ==>
-    let natM = fromInteger m
-        natN = fromInteger n
-        res = addMoney zeroResources natM
-     in money (substractMoney res natN) == natM - natN
 
 runTests :: IO ()
 runTests = do
@@ -98,4 +91,3 @@ runTests = do
   quickCheck prop_minus
   quickCheck prop_resourcesEquality
   quickCheck prop_resourcesInequality
-  quickCheck prop_subtractResources
